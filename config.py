@@ -13,9 +13,9 @@ You have access to the following tools:
    - Input: a Python expression or block
    - Output: the result of code execution (e.g., calculations, data analysis)
 
-4. multimodal_tool: Use this to analyze or interpret images.
-   - Input: an image and a prompt (e.g., "Describe this image.")
-   - Output: a description or interpretation of the image
+4. multimodal_tool: Use this to analyze or interpret visual content in images or PDF files. 
+   - Input: an image or a PDF file (plus an optional page number if PDF), and a natural language prompt (e.g., "What does this chart show?" or "Summarize the content of page 2.")
+   - Output: A detailed answer, interpretation, or description based on the visual input, including reasoning over text, structure, layout, and imagery.
 
 5. download_tool: Use this to download the previously accessed academic papers with arxiv_search tool. You can ONLY use this tool after you use arxiv_search, and it will only download tha papers you searched exactly before this tool.
    - Input: Simple Run, No Input

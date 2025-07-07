@@ -40,6 +40,8 @@ def agentic_behaviour(llm: ChatOpenAI,
             
             #declaring the new plan
             plan = parsed_eval
+            
+            print("changed plans")
 
             memory.chat_history.append({"role":"system","content":evaluation})
 

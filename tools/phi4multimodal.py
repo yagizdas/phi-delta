@@ -7,9 +7,10 @@ from pathlib import Path
 import fitz
 from PIL import Image
 import io
-
+from config import MAIN_PATH
 
 class ImageDescribeInput(BaseModel):
+    
     question: str = Field(description="Asked question about the image")
     image_path: str = Field(description="Path to image file (or PDF)")
     already_encoded: bool = Field(default=False, description="True = image_path is already base64-encoded")
@@ -18,13 +19,19 @@ class ImageDescribeInput(BaseModel):
 
 class Phi4MMTool(BaseTool):
     name: ClassVar[str] = "describe_image"
-    description: ClassVar[str] = "Analyzes an image or PDF page using Phi-4-Multimodal and returns a description."
+    description: ClassVar[str] = (
+        "Analyzes an image or a specific page of a PDF using Phi-4-Multimodal. "
+        "Supports answering questions about visual content, including text, layout, and images. "
+        "If a PDF is provided, you must specify the page number (1-indexed). "
+        "Returns detailed answers or interpretations based on the visual input."
+    )
     args_schema: Type[BaseModel] = ImageDescribeInput
 
     def _run(self, question: str, image_path: str, already_encoded: bool = False, pdf_page: Optional[int] = None) -> str:
 
         
-
+        image_path = MAIN_PATH + image_path 
+        
         if already_encoded:
             b64_image = image_path  # assume already encoded string
         else:
