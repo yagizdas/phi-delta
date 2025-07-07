@@ -1,10 +1,11 @@
 ## File: phi_delta/agents/quickresponse.py
 
-from ..prompts import QUICKRESPONSE_PROMPT_TEMPLATE
+from prompts import QUICKRESPONSE_PROMPT_TEMPLATE
+from memory.memory import AgentMemory
 
-def run_quickresponse(reasoning_llm, question: str, context: str = "") -> str:
+def run_quickresponse(reasoning_llm, question: str, context: AgentMemory) -> str:
 
-    quickresponse_prompt = QUICKRESPONSE_PROMPT_TEMPLATE.format(context=context)
+    quickresponse_prompt = QUICKRESPONSE_PROMPT_TEMPLATE.format(context=context.chat_summary)
 
     result = reasoning_llm.invoke([
 

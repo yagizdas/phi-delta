@@ -1,4 +1,4 @@
-from ..config import MAIN_PATH
+from config import MAIN_PATH
 
 def list_directory(filetype: str = None, directory: str = MAIN_PATH) -> list[str]:
     import os

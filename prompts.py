@@ -6,7 +6,9 @@ You are a router agent. Your job is to classify the query into one of two pipeli
 
 You MUST choose exactly one of the following options. Do not explain your choice. Do not output anything else.
 
-Since the user can ask questions back to back, there might be some context available here from the older messages and actions that relates to the users message: {context}
+Since the user can ask questions back to back, here's a brief summary of the chat so far: {context} 
+
+take THIS into account when making your decision.
 
 ---
 
@@ -164,7 +166,7 @@ EVALUATOR_PROMPT_TEMPLATE = """
 
     ---
 
-    Available tools for the executor agent: {TOOL_DESCRIPTIONS}
+    Available tools for the executor agent: {tools}
 
     The full plan steps are: {steps}
 

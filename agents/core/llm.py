@@ -1,6 +1,5 @@
 from langchain_openai import ChatOpenAI
-from ...config import LLM_PORT, MODEL_NAME
-from langgraph.prebuilt import create_react_agent
+from config import LLM_PORT, MODEL_NAME
 
 
 def instance_llm(temperature: float = 0.6):

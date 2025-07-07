@@ -1,5 +1,5 @@
-from ..config import TOOL_DESCRIPTIONS
-from ..prompts import EVALUATOR_PROMPT_TEMPLATE
+from config import TOOL_DESCRIPTIONS
+from prompts import EVALUATOR_PROMPT_TEMPLATE
 
 def run_evaluator(reasoning_llm, action: str, step: str, steps) -> str:
 

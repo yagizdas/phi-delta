@@ -1,9 +1,10 @@
 import arxiv
 from langchain.tools import Tool
+from memory.memory import AgentMemory
 
 # 2. Create a custom function that returns structured data
 
-def search_arxiv_details(query: str, system_link_memory, download= False, max_results: int = 3, ) -> str:
+def search_arxiv_details(query: str, memory, max_results: int = 3, ) -> str:
 
     
     """
@@ -14,7 +15,7 @@ def search_arxiv_details(query: str, system_link_memory, download= False, max_re
     """
     try:
 
-        system_link_memory.clear()
+        memory.arxiv_links.clear()
     
         # Perform the search using the arxiv library
         Client = arxiv.Client()
@@ -40,16 +41,14 @@ def search_arxiv_details(query: str, system_link_memory, download= False, max_re
                 f"ArXiv ID: {paper_id}\n"
                 f"Link: {paper_link}\n"
             )
+
             formatted_results.append(result_string)
             
             
-            system_link_memory.append([paper_link, result.title])
+            memory.arxiv_links.append([paper_link, result.title])
 
         if not formatted_results:
             return "No results found on ArXiv for that query."
-
-        if not download:
-            return "\n---\n".join(formatted_results)
 
         return "\n---\n".join(formatted_results)
 
@@ -57,8 +56,9 @@ def search_arxiv_details(query: str, system_link_memory, download= False, max_re
         print("error")
         return f"An error occurred during ArXiv search: {e}"
 
-def search_arxiv_tool_input(input_data: dict) -> str:
+def search_arxiv_tool_input(input_data: dict, memory: AgentMemory) -> str:
+
     query = input_data.get("query", "")
     max_results = input_data.get("max_results", 3)
 
-    return search_arxiv_details(query=query, max_results=max_results)
+    return search_arxiv_details(query=query, memory=memory, max_results=max_results)

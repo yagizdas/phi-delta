@@ -1,25 +1,28 @@
-from ..agents import run_agent, run_evaluator
-from ..parsers import parse_agent, parse_eval
+from agents import run_agent, run_evaluator
+from parsers import parse_agent, parse_eval
 from langchain_openai import ChatOpenAI
-from ..memory.memory import AgentMemory
+from memory.memory import AgentMemory
 from typing import List
 
 def agentic_behaviour(llm: ChatOpenAI, 
                       agent, 
                       plan: List[str], 
                       question: str,  
-                      memory: AgentMemory.chat_history, 
-                      context: str = "",
+                      memory: AgentMemory, 
                       log :bool = False) -> list:
 
     i = 0
 
     while i < len(plan):
 
-        answer, tools = run_agent(agent, plan[i], context)
+        answer, tools = run_agent(agent, plan[i], memory)
         summ, res = parse_agent(answer) 
 
-        memory.append({"role":"system","content": answer})
+        print(f"\n\n {i}th Step: ", plan[i], "\n\n")
+
+        print(answer)
+
+        memory.chat_history.append({"role":"system","content": answer})
 
         evaluation = run_evaluator(llm, answer, plan[i], plan)
 
@@ -47,8 +50,7 @@ def agentic_behaviour(llm: ChatOpenAI,
             continue
 
         if log:
-            print(f"\n\n {i}th Context: ", context, "\n\n")
-            print(answer)
+            print(f"\n\n {i}th Context: ", memory.chat_summary, "\n\n")
 
         i += 1
 

@@ -1,7 +1,7 @@
 ## File: phi_delta/agents/critic.py
 
-from ..config import TOOL_DESCRIPTIONS
-from ..prompts import CRITIC_PROMPT_TEMPLATE
+from config import TOOL_DESCRIPTIONS
+from prompts import CRITIC_PROMPT_TEMPLATE
 
 def run_critic(reasoning_llm, planner_response: str) -> str:
 

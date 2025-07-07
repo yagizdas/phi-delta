@@ -1,4 +1,4 @@
-from parse_critic_plan import parse_critic_plan
+from .parse_critic_plan import parse_critic_plan
 
 def parse_eval(response: str):
 
