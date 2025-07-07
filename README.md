@@ -40,5 +40,5 @@ Will be updated!
 ### 1. Clone the Repo
 
 ```bash
-git clone https://github.com/yourusername/phi-delta.git
+git clone https://github.com/yagizdas/phi-delta.git
 cd phi-delta
