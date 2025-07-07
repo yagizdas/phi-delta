@@ -1,7 +1,7 @@
 from ..config import TOOL_DESCRIPTIONS
 from ..prompts import EVALUATOR_PROMPT_TEMPLATE
 
-def run_evaluator(reasoning_llm, action: str, step: str, steps):
+def run_evaluator(reasoning_llm, action: str, step: str, steps) -> str:
 
     eval_prompt = EVALUATOR_PROMPT_TEMPLATE.format(
         tools=TOOL_DESCRIPTIONS,
