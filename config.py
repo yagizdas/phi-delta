@@ -30,4 +30,8 @@ You are only allowed to plan steps that use these tools. Do not mention subscrib
 You need to only solve the task. Do not add something suggestive.
 """
 
-main_path = "./model_files/"
+MAIN_PATH = "./model_files/"
+
+LLM_PORT = "http://localhost:8000/v1"
+
+MODEL_NAME= "phi-4-IQ4_XS"

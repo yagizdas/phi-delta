@@ -1,9 +1,9 @@
 import requests
 from pathlib import Path
 from typing import List, Tuple
-from config import main_path
+from ..config import MAIN_PATH
 
-def download_arxiv_pdfs(links: List[str], save_directory: str = main_path) -> Tuple[str, List[str]]:
+def download_arxiv_pdfs(links: List[str], save_directory: str = MAIN_PATH) -> Tuple[str, List[str]]:
     
     downloaded_file_paths = []
 

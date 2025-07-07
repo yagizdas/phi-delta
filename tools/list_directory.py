@@ -1,6 +1,6 @@
-from config import main_path
+from ..config import MAIN_PATH
 
-def list_directory(filetype: str = None, directory: str = main_path) -> list[str]:
+def list_directory(filetype: str = None, directory: str = MAIN_PATH) -> list[str]:
     import os
 
     try:
