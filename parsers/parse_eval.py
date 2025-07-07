@@ -9,7 +9,7 @@ def parse_eval(response: str):
             if "no change" in line.lower():
                 return 1
             
-            if "break" in line.lower():
+            if "break" in line.lower() or "stop" in line.lower():
                 return -1
             
             if "changed steps" in line.lower():

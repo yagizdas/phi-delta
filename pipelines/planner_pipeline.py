@@ -14,6 +14,8 @@ def planner_behaviour(llm: ChatOpenAI,
 
     critic_answer = run_critic(llm, planner_answer)
 
+    print("\n\nCritized plan:",critic_answer,"\n\n")
+
     p_c_a = parse_critic_plan(critic_answer)
 
     memory.chat_history.append({"role":"system","content":critic_answer})

@@ -1,32 +1,39 @@
 # phi_delta/prompts.py
 
 ROUTER_PROMPT_TEMPLATE = """
-    
-You are a router agent. Your job is to classify the query into one of two pipelines.
+You are a router agent. Your job is to classify the user's latest message into one of two pipelines.
 
 You MUST choose exactly one of the following options. Do not explain your choice. Do not output anything else.
 
-Since the user can ask questions back to back, here's a brief summary of the chat so far: {context} 
+The user can ask questions back to back. Here's a brief summary of the conversation so far:  
+{context}
 
-take THIS into account when making your decision.
+Always consider this context when making your decision.
 
 ---
 
 **Available Pipelines:**
 
 1) QuickResponse  
-Use this if the query is a simple or casual question, such as "How are you?", "Who are you?", or other short, conversational, or factual queries that do not require tools or reasoning.
+Use this if the query is simple, casual, or conversational. This includes:
+- Basic questions like "How are you?", "Who are you?"
+- Short factual questions
+- Clarifying or memory-based questions such as "What did I just ask?" or "What did you say earlier?"
+- Light chitchat or general curiosity that doesn’t require tools, reasoning, or planning
+
+Even if the question references a past tool use or step, if the user is asking *about* the past (not to redo or expand on it), stay in **QuickResponse**.
 
 2) Agentic  
-Use this if the query is complex, involves reasoning, tool use, analysis, math, or planning. Anything requiring an agentic workflow falls here.
+Use this only if the query is complex, requires step-by-step reasoning, multi-step tasks, tool use, analysis, or planning.
+If the question clearly initiates a workflow, data search, multi-step instruction, or deep reasoning — select Agentic.
 
 ---
 
 **Instructions:**
 
-- Just select the pipeline name.
-- DO NOT generate any reasoning, explanation, or steps.
-- ONLY output the selected pipeline in the format below:
+- ONLY return the selected pipeline.
+- Do NOT explain your reasoning.
+- Use the exact format below:
 
 **Response Format (strict):**
 
@@ -37,8 +44,8 @@ Choosen Pipeline: <QuickResponse OR Agentic>
 The tools available to the Agentic pipeline are:
 
 {tools}
-
 """
+
 
 QUICKRESPONSE_PROMPT_TEMPLATE = """
 
@@ -132,6 +139,7 @@ EVALUATOR_PROMPT_TEMPLATE = """
     2. Determine if the current output:
     - Was correct and complete → Proceed with **No change**.
     - Was incorrect or incomplete → Suggest **Changed Steps**.
+    - Matches what the user asked for → Choose **STOP**.
     - Requires **user input, file, clarification, or external confirmation** → Must **BREAK** AT ALL COSTS.
 
     You MUST choose exactly one of the following outcomes:
@@ -149,6 +157,8 @@ EVALUATOR_PROMPT_TEMPLATE = """
     - Use this if the executor's response depends on user input, file upload, external confirmation, or any human interaction.
     - If the step includes phrases like "please upload", "select a file", "provide your input", "waiting for...", etc., you MUST choose BREAK.
 
+    **Decision: "STOP"**
+    - If the completed results already contain a clear, specific, and contextually relevant answer, you should choose this option."
     ---
 
     **Instructions:**
@@ -165,6 +175,8 @@ EVALUATOR_PROMPT_TEMPLATE = """
     Step y. <...>
 
     ---
+
+    Remember, The question user asked was: {question}. You should only compare the executor's output to the user input to conclude if you should stop the process or not.
 
     Available tools for the executor agent: {tools}
 
@@ -184,3 +196,32 @@ SUMMARIZER_PROMPT_EXAMPLE = """
     Do NOT repeat logs, metadata, or all tool outputs. Abstract what happened. Your goal is to compress the memory into ~300-500 tokens of useful continuity.
     
     """
+
+HUMANIZER_PROMPT_TEMPLATE = """
+You are a humanizer agent.
+
+Your job is to convert structured agent plan steps into clear, natural, human-sounding action sentences. These should feel like someone narrating what they’re doing step-by-step in plain language.
+
+Here’s the input step:
+
+"{step}"
+
+There is Tools that can be used: 
+{tools}
+
+---
+
+Please respond with a single sentence in the first person, using natural language. Examples:
+
+Input: Step 1: search the web with "arxiv tool" to find papers about diffusion models.  
+Output: I’m searching the web using the arXiv tool to find papers about diffusion models.
+
+Input: Step 2: run "pdf-analyzer" on the downloaded document.  
+Output: I’m analyzing the downloaded document using the PDF analyzer.
+
+Input: Step 3: summarize top results from "web-search" about recent AI benchmarks.  
+Output: I’m summarizing the top results from the web search on recent AI benchmarks.
+
+Do NOT include any explanation. Just output the humanized sentence.
+
+"""

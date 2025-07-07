@@ -1,4 +1,4 @@
-from agents import run_agent, run_evaluator
+from agents import run_agent, run_evaluator, run_humanizer
 from parsers import parse_agent, parse_eval
 from langchain_openai import ChatOpenAI
 from memory.memory import AgentMemory
@@ -15,16 +15,18 @@ def agentic_behaviour(llm: ChatOpenAI,
 
     while i < len(plan):
 
+        print(run_humanizer(llm, plan[i]))
+
         answer, tools = run_agent(agent, plan[i], memory)
         summ, res = parse_agent(answer) 
 
-        print(f"\n\n {i}th Step: ", plan[i], "\n\n")
+        #print(f"\n\n {i}th Step: ", plan[i], "\n\n")
 
-        print(answer)
+        print("\nAnswer: "+answer +"\n\n")
 
         memory.chat_history.append({"role":"system","content": answer})
 
-        evaluation = run_evaluator(llm, answer, plan[i], plan)
+        evaluation = run_evaluator(llm, answer, plan[i], plan, question=question)
 
         if log:
             print(f"\n\n {i}th Evaluation: ", evaluation, "\n\n")
@@ -32,8 +34,6 @@ def agentic_behaviour(llm: ChatOpenAI,
         parsed_eval = parse_eval(evaluation)
 
         if parsed_eval == -1:
-            
-            print(answer)
             break
         
         elif isinstance(parsed_eval, str):
@@ -41,11 +41,9 @@ def agentic_behaviour(llm: ChatOpenAI,
             #declaring the new plan
             plan = parsed_eval
             
-            print("changed plans")
+            print("\n\nChanged plans\n\n")
 
             memory.chat_history.append({"role":"system","content":evaluation})
-
-            print(answer)
 
             i = 0
 

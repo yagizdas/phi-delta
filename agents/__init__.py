@@ -7,6 +7,7 @@ from .quickresponse import run_quickresponse
 from .router import run_router
 from .summarizer import run_summarizer
 from .executor import run_agent
+from .humanizer import run_humanizer
 
 __all__ = ["instance_agent","instance_llm" "run_critic", "run_evaluator",
-           "run_planner", "run_quickresponse", "run_router", "run_summarizer", "run agent"]
+           "run_planner", "run_quickresponse", "run_router", "run_summarizer", "run agent", "run_humanizer"]

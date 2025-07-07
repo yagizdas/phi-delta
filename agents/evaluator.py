@@ -1,11 +1,12 @@
 from config import TOOL_DESCRIPTIONS
 from prompts import EVALUATOR_PROMPT_TEMPLATE
 
-def run_evaluator(reasoning_llm, action: str, step: str, steps) -> str:
+def run_evaluator(reasoning_llm, action: str, step: str, steps, question:str) -> str:
 
     eval_prompt = EVALUATOR_PROMPT_TEMPLATE.format(
         tools=TOOL_DESCRIPTIONS,
-        steps=steps
+        steps=steps,
+        question=question,
     )
 
     result = reasoning_llm.invoke([

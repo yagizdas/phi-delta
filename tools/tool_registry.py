@@ -37,7 +37,7 @@ def initialize_tools(memory : AgentMemory) -> list[Tool]:
         description=(
             "Searches ArXiv for academic papers. "
             "Accepts a dictionary with 'query' (str), and 'max_results' (int). "
-            "Example input: {'query': 'quantum entanglement', 'max_results': 5}"
+            "Example input: {'query': 'your query here', 'max_results': 'your max results here'}"
         )
     )
     
