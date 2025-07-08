@@ -26,7 +26,7 @@ def download_arxiv_pdfs(choices: List[int], links: List[str], save_directory: st
             print(f"❌ Invalid choice: {choice}. Try again.")
             continue
         
-        print(links[choice])
+        print(links[choice-1])
         
         pdf_url = convert_to_pdf_url(links[choice-1][0])
 

@@ -114,12 +114,17 @@ EXECUTOR_PROMPT_TEMPLATE = """
     ### Summary:
     - You MUST list any names, URLs, locations, files, or outputs you found.
     - Always include **lists** when the step returns a set of results.
-    - This summary will be used as memory for future steps. Do NOT skip any critical information.
-    - Example:
-    ❌ Bad: "I found good options."  
-    ✅ Good: "Top results: 1. X, 2. Y, 3. Z."
 
-    If you retrieved data but do not summarize it clearly here, future agents will fail.
+    ⚠️ Important: If you are selecting, filtering, or ranking items from a previously shown list (such as results from `arxiv_search`), you MUST refer to them using their **original numbered index** from that list (e.g., Paper 1, Paper 3).  
+    ❌ Do NOT renumber the items or invent a new list.  
+    ✅ Always preserve the original order and indexing — this is critical for tool continuity (e.g., for `download_tool` to function correctly).
+
+    ✅ Example summary after selecting papers:
+    - Selected papers: 1. Paper_1_name, 3. Paper_3_name...
+
+    - If you used a tool, summarize its output clearly.
+
+    - This summary will be used as memory for future steps. Do NOT skip any critical information.
 
     ### Resources:
     List all links, references, file names, or other structured outputs. If none, say "None."
@@ -127,7 +132,8 @@ EXECUTOR_PROMPT_TEMPLATE = """
     ---
     ### Tools:
     {tools}
-    """
+"""
+
 
 EVALUATOR_PROMPT_TEMPLATE = """
     You are an evaluator agent that is assigned to evaluate the executor agent.

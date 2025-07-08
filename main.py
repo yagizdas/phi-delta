@@ -33,7 +33,7 @@ def main():
                                   planner_behaviour(llm, question, memory), 
                                   question, 
                                   memory,
-                                  log=True)
+                                  log=False)
                 
             conv_hist = run_summarizer(llm, memory)
 

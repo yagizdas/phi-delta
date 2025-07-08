@@ -10,7 +10,7 @@ def run_agent(agent, step: str, context: str = "") -> tuple[str, list[str]]:
         tools=TOOL_DESCRIPTIONS
         )
     
-    print(f"\n\nExecutor Prompt: {executor_prompt}\n\n")
+    #print(f"\n\nExecutor Prompt: {executor_prompt}\n\n")
 
     result = agent.invoke({"messages":[
 

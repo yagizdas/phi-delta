@@ -42,6 +42,10 @@ def search_arxiv_details(query: str, memory, max_results: int = 3, ) -> str:
             # The actual ID is the last part of the URL
             paper_id = paper_link.split('/')[-1]
 
+            if len(result.summary) > 300:
+                # Truncate the summary to 300 characters if it's too long
+                result.summary = result.summary[:300] + "..."
+
             result_string = (
                 f"Title: {result.title}\n"
                 f"Authors: {', '.join(author.name for author in result.authors)}\n"
@@ -98,7 +102,7 @@ def search_arxiv_tool_input(input_data: str, memory: AgentMemory) -> str:
 
             if query_match:
                 query = query_match.group(1).strip()
-                
+
             elif ":" not in input_data and "=" not in input_data:
 
                 # Assume whole string is a query
@@ -113,6 +117,7 @@ def search_arxiv_tool_input(input_data: str, memory: AgentMemory) -> str:
     if not query:
         return "Missing 'query'. Please provide a valid search term."
 
-    print(f"Running search with query='{query}', max_results={max_results}")
-
-    return search_arxiv_details(query=query, memory=memory, max_results=max_results)
+    #print(f"Running search with query='{query}', max_results={max_results}")
+    result = search_arxiv_details(query=query, memory=memory, max_results=max_results)
+    #print(f"Search result: {result}")
+    return result

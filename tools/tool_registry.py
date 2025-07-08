@@ -38,7 +38,7 @@ def initialize_tools(memory : AgentMemory) -> list[Tool]:
         func=lambda input_data: search_arxiv_tool_input(input_data, memory),
         description=(
             "Searches ArXiv for academic papers. "
-            "Accepts a dictionary with 'query' (str), and 'max_results' (int). "
+            "Accepts a dictionary with 'query': (str), 'max_results': (int).' "
             "Example input: {'query': 'your query here', 'max_results': 'your max results here'}"
         )
     )
@@ -49,7 +49,7 @@ def initialize_tools(memory : AgentMemory) -> list[Tool]:
         func=lambda input_data: bound_download_tool(input_data, memory.arxiv_links),  # return just the message
         description=("Downloads the PDF versions of academic papers from the last arxiv_search. It saves them locally for extensive analysis of the academic resources."
                      "Accepts a list of the wanted papers to be downloaded. " 
-                     "Example input: '[1, 2, 3]' where the numbers correspond to the indices of the papers in the last arxiv_search result.")
+                     "Example input: '[x, y ,z]' where the x,y,z letters correspond to the indices of the papers in the last arxiv_search result.")
 
     )
 
@@ -70,7 +70,7 @@ def initialize_tools(memory : AgentMemory) -> list[Tool]:
 if __name__ == "__main__":
     
     #for testing purposes only
-    
+
     import json
     from memory.memory import AgentMemory
 
