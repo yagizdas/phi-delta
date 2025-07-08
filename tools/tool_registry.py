@@ -68,6 +68,9 @@ def initialize_tools(memory : AgentMemory) -> list[Tool]:
 
 
 if __name__ == "__main__":
+    
+    #for testing purposes only
+    
     import json
     from memory.memory import AgentMemory
 

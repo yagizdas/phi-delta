@@ -214,4 +214,6 @@ testo.py
 
 llama.cpp/
 model_files/
+debug_logs/
+
 >>>>>>> 6a31b9ef0cd879131b09839fdaa7f0486064f1e7
