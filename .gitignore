@@ -210,5 +210,8 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
+testo.py
+
+llama.cpp/
 model_files/
 >>>>>>> 6a31b9ef0cd879131b09839fdaa7f0486064f1e7
