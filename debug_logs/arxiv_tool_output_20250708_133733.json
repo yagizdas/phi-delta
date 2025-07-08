@@ -1,7 +1,0 @@
-{
-  "input": {
-    "query": "crazy papers",
-    "max_results": 3
-  },
-  "output": "Title: Withdrawn paper\nAuthors: Sergio De Filippo\nPublished: 1999-11-18\nSummary: Only craziness I am ashamed about.\nArXiv ID: 9911085v5\nLink: http://arxiv.org/abs/quant-ph/9911085v5\n\n---\nTitle: Is Quantum Reduction the Ultimate Outcome of Decoherence ?\nAuthors: Roland Omnes\nPublished: 2006-03-10\nSummary: This model was crazy (or not crazy enough for this topic) and it would lead\nto a reduction time much longer than the age of the universe.\nArXiv ID: 0603092v2\nLink: http://arxiv.org/abs/quant-ph/0603092v2\n\n---\nTitle: NMR spectroscopy and computing beyond myth and fiction\nAuthors: Sergio De Filippo\nPublished: 1999-11-04\nSummary: Only craziness I am ashamed about.\nArXiv ID: 9911015v2\nLink: http://arxiv.org/abs/quant-ph/9911015v2\n"
-}

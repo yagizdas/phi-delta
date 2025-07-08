@@ -1,7 +1,0 @@
-{
-  "input": {
-    "query": "COVID-19 health",
-    "max_results": 5
-  },
-  "output": "An error occurred during ArXiv search: name 'i' is not defined"
-}
