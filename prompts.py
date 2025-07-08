@@ -125,9 +125,7 @@ EXECUTOR_PROMPT_TEMPLATE = """
     List all links, references, file names, or other structured outputs. If none, say "None."
 
     ---
-
-    You have tools that can be used: 
-
+    ### Tools:
     {tools}
     """
 
@@ -191,7 +189,7 @@ SUMMARIZER_PROMPT_EXAMPLE = """
     - The user’s goals and key questions
     - Critical results from tools (e.g. titles, conclusions)
     - Decisions made, paths taken
-    - Current task status or next goal
+    - Current task status
 
     Do NOT repeat logs, metadata, or all tool outputs. Abstract what happened. Your goal is to compress the memory into ~300-500 tokens of useful continuity.
     

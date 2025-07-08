@@ -20,7 +20,7 @@ def main():
 
             if question.lower() == 'exit':
                 break
-
+            
             memory.chat_history.append({"role": "user", "content": question})
 
             decision = parse_router(run_router(llm, question, context=memory)) 
@@ -33,7 +33,7 @@ def main():
                                   planner_behaviour(llm, question, memory), 
                                   question, 
                                   memory,
-                                  log=False)
+                                  log=True)
                 
             conv_hist = run_summarizer(llm, memory)
 

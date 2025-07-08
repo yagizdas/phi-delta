@@ -6,8 +6,10 @@ You have access to the following tools:
    - Output: recent web results related to the query
 
 2. arxiv_search: Use this to search for academic papers in a max_results amount. download_tool can be used AFTER to download the resulting PDFs to local storage for further analysis. Downloading the previously accessed ArXiv links are not possible, it has to be downloaded right away or not. 
-   - Input: A dictionary. Example: "query":"the topic/author to be searched", "max_results": 3-5 etc.
-   - Output: A number of academic papers with summaries, authors, and links. 
+   - Input: A JSON string representing a dictionary with a "query" and optional "max_results".
+     Example: {"query": "your search query here", "max_results": 3}
+   - Output: A formatted string with the titles, summaries, arXiv IDs, and links to the papers.
+   - Note: DO NOT go more than 5 max_results...
 
 3. code_tool: Executes Python code.
    - Input: a Python expression or block
@@ -18,8 +20,9 @@ You have access to the following tools:
    - Output: A detailed answer, interpretation, or description based on the visual input, including reasoning over text, structure, layout, and imagery.
 
 5. download_tool: Use this to download the previously accessed academic papers with arxiv_search tool. You can ONLY use this tool after you use arxiv_search, and it will only download tha papers you searched exactly before this tool.
-   - Input: Simple Run, No Input
-   - Output: Downloading the Papers searched before to gather a deep analysis on them.
+   - Input: The indices of the papers you want to download, in a list format. Example: [1, 2, 3] where the numbers correspond to the indices of the papers in the last arxiv_search result.
+   - Note: The first index is 1, not 0. If you want to download the first paper, you have to input [1].
+   - Output: Downloading the Papers searched before to gather a deep analysis on them. The files will be saved in the "./model_files/" directory, and the output will be a message about the success of the download and the paths of the downloaded files.
 
 6. list_directory_tool: Use this to check your directory. You can check out the previous files that are downloaded before you to gather information about their name to further analysis on the next steps.
    - Input: "" for listing ALL files, or "pdf", "jpeg" etc. to filter-search with special file types.

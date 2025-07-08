@@ -1,0 +1,7 @@
+{
+  "input": {
+    "query": "heyy",
+    "max_results": 3
+  },
+  "output": "An error occurred during ArXiv search: name 'i' is not defined"
+}

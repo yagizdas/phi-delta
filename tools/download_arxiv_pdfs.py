@@ -2,8 +2,13 @@ import requests
 from pathlib import Path
 from typing import List, Tuple
 from config import MAIN_PATH
+import ast
 
-def download_arxiv_pdfs(links: List[str], save_directory: str = MAIN_PATH) -> Tuple[str, List[str]]:
+def bound_download_tool(input_indices_str, links):
+    input_indices = ast.literal_eval(input_indices_str)  # Converts "[1, 2]" -> [1, 2]
+    return download_arxiv_pdfs(input_indices, links)
+
+def download_arxiv_pdfs(choices: List[int], links: List[str], save_directory: str = MAIN_PATH) -> Tuple[str, List[str]]:
     
     downloaded_file_paths = []
 
@@ -16,10 +21,16 @@ def download_arxiv_pdfs(links: List[str], save_directory: str = MAIN_PATH) -> Tu
 
     Path(save_directory).mkdir(parents=True, exist_ok=True)
 
-    for arxiv_url,doc_name in links:
+    for choice in choices:
+        if choice < 0 or choice >= len(links):
+            print(f"❌ Invalid choice: {choice}. Try again.")
+            continue
         
-        pdf_url = convert_to_pdf_url(arxiv_url)
+        print(links[choice])
+        
+        pdf_url = convert_to_pdf_url(links[choice-1][0])
 
+        doc_name = links[choice-1][-1]
         # Better Document Names
         doc_name = doc_name.replace(" ", "_").replace("/","-") + ".pdf"
 

@@ -12,15 +12,30 @@ def agentic_behaviour(llm: ChatOpenAI,
                       log :bool = False) -> list:
 
     i = 0
+    
+    step_by_step_context = "Summary of the previous steps:"
 
     while i < len(plan):
+        
+        if log:
+            print("-"*60 + f" {i}th Step " + "-"*60)
 
         print(run_humanizer(llm, plan[i]))
 
-        answer, tools = run_agent(agent, plan[i], memory)
+        if log:
+            print(f"\n\n {i}th Context (Summary): ", memory.chat_summary, "\n\n")
+
+        answer, tools = run_agent(agent, plan[i], step_by_step_context)
+
+        print("\n\nagent ran\n\n")
+
         summ, res = parse_agent(answer) 
 
-        #print(f"\n\n {i}th Step: ", plan[i], "\n\n")
+        # Since agent does not need all the summarized context, we only feed with the summary of the previous steps
+        step_by_step_context += f"{answer}\n\n"
+
+        if log:
+            print(f"\n\n {i}th Summary: ", summ, "\n\n")
 
         print("\nAnswer: "+answer +"\n\n")
 
@@ -49,9 +64,9 @@ def agentic_behaviour(llm: ChatOpenAI,
 
             continue
 
-        if log:
-            print(f"\n\n {i}th Context: ", memory.chat_summary, "\n\n")
 
+        if log:
+            print("-"*130 + "\n\n")
         i += 1
 
 

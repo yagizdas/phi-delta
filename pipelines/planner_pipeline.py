@@ -9,7 +9,7 @@ def planner_behaviour(llm: ChatOpenAI,
                       memory: AgentMemory) -> List[str]:
 
     memory.chat_history.append({"role":"user","content":question})
-
+    
     planner_answer = run_planner(llm, question, memory)
 
     critic_answer = run_critic(llm, planner_answer)

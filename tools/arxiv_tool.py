@@ -1,8 +1,17 @@
 import arxiv
 from langchain.tools import Tool
 from memory.memory import AgentMemory
+import json
+import os
+from datetime import datetime
 
+import re
 # 2. Create a custom function that returns structured data
+from pydantic import BaseModel
+
+class ArxivSearchInput(BaseModel):
+    query: str
+    max_results: int
 
 def search_arxiv_details(query: str, memory, max_results: int = 3, ) -> str:
 
@@ -44,7 +53,6 @@ def search_arxiv_details(query: str, memory, max_results: int = 3, ) -> str:
 
             formatted_results.append(result_string)
             
-            
             memory.arxiv_links.append([paper_link, result.title])
 
         if not formatted_results:
@@ -56,9 +64,55 @@ def search_arxiv_details(query: str, memory, max_results: int = 3, ) -> str:
         print("error")
         return f"An error occurred during ArXiv search: {e}"
 
-def search_arxiv_tool_input(input_data: dict, memory: AgentMemory) -> str:
 
-    query = input_data.get("query", "")
-    max_results = input_data.get("max_results", 3)
+def search_arxiv_tool_input(input_data: str, memory: AgentMemory) -> str:
+    query = ""
+    max_results = 3  # default fallback
+
+    if isinstance(input_data, dict):
+        query = input_data.get("query", "")
+        max_results = input_data.get("max_results", 3)
+
+    elif isinstance(input_data, str):
+        input_data = input_data.strip()
+        if not input_data:
+            return "Empty input received. Please provide a search query."
+
+        print("Input is a string, trying to parse it...")
+
+        # First attempt: try JSON-style input
+        try:
+            normalized = input_data.replace("'", '"')
+            parsed = json.loads(normalized)
+
+            query = parsed.get("query", "")
+            max_results = parsed.get("max_results", 3)
+
+            print(f"Parsed JSON: query={query}, max_results={max_results}")
+
+        except json.JSONDecodeError:
+            print("Failed JSON parsing. Falling back to regex parsing...")
+
+            query_match = re.search(r"query\s*[:=]\s*([^,]+)", input_data, re.IGNORECASE)
+            max_results_match = re.search(r"max_results\s*[:=]\s*(\d+)", input_data, re.IGNORECASE)
+
+            if query_match:
+                query = query_match.group(1).strip()
+                
+            elif ":" not in input_data and "=" not in input_data:
+
+                # Assume whole string is a query
+                query = input_data.strip()
+
+            if max_results_match:
+                max_results = int(max_results_match.group(1))
+
+    else:
+        return "Invalid input type. Please provide a string or dictionary."
+
+    if not query:
+        return "Missing 'query'. Please provide a valid search term."
+
+    print(f"Running search with query='{query}', max_results={max_results}")
 
     return search_arxiv_details(query=query, memory=memory, max_results=max_results)

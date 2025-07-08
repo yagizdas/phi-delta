@@ -3,12 +3,14 @@ from prompts import EXECUTOR_PROMPT_TEMPLATE
 from utils import extract_tool_names
 from memory.memory import AgentMemory
 
-def run_agent(agent, step: str, context: AgentMemory) -> tuple[str, list[str]]:
+def run_agent(agent, step: str, context: str = "") -> tuple[str, list[str]]:
 
     executor_prompt = EXECUTOR_PROMPT_TEMPLATE.format(
-        context=context.chat_summary, 
+        context=context, 
         tools=TOOL_DESCRIPTIONS
         )
+    
+    print(f"\n\nExecutor Prompt: {executor_prompt}\n\n")
 
     result = agent.invoke({"messages":[
 
