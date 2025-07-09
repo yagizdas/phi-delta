@@ -29,11 +29,6 @@ def initialize_tools(llm, memory : AgentMemory) -> list[Tool]:
         A list of initialized tools.
 
     """
-
-    search_tool = TavilySearchResults(max_results = 3, 
-                                      include_answer = True)
-    
-
     search_tool = Tool.from_function(
         name="search_tool",
         func=lambda search: search_and_summarize(llm, search),
