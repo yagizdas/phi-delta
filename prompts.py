@@ -21,7 +21,7 @@ The user may ask questions back to back. Below is helpful information to guide y
 
 ---
 
-Always consider both the conversation and the retrieved context before deciding.
+Always consider both the conversation and the retrieved context before deciding. RETRIEVED INFORMATION IS 100% TRUSTED and should be used to answer questions.
 
 ---
 
@@ -30,21 +30,21 @@ Always consider both the conversation and the retrieved context before deciding.
 1) QuickResponse  
 Use this if the query is simple, casual, or conversational. This includes:
 - Basic questions like "How are you?", "Who are you?"
-- Short factual questions
 - Clarifying or memory-based questions such as "What did I just ask?" or "What did you say earlier?"
-- Light chitchat or general curiosity that doesn’t require tools, reasoning, or planning
+- Light chitchat or general curiosity that DOESNT require tools, reasoning, or planning or complex explanations.
 
 Even if the question references a past tool use or step, if the user is asking *about* the past (not to redo or expand on it), stay in **QuickResponse**.
 
-2) RAGQuickResponse  
-Use this if the query is factual, research-based, or knowledge-heavy — and the retrieved context contains enough information to fully answer the question directly.
+2) RAG  
+Choose this when the user asks a technical, factual, or academic question.
+If the user's query can be answered directly from retrieved docs, choose this — even if phrased casually.
 
 Choose this if:
 - The Retrieved Context above contains relevant information about the question
 - The question is straightforward and can be answered with the retrieved information
 - The question is about a technical or academic topic
 - The retrieved information appears sufficient to answer it without further reasoning or planning
-- It is essentially a “RAG-enabled quick response”
+- It is essentially a “Proof-enabled quick response”
 
 3) Agentic  
 Use this only if the query is complex, requires step-by-step reasoning, multi-step tasks, tool use, analysis, or planning.
@@ -52,15 +52,14 @@ If the question clearly initiates a workflow, data search, multi-step instructio
 
 ---
 
-**Instructions:**
+IMPORTANT: You MUST respond with exactly one of the following options:
 
-- ONLY return the selected pipeline.
-- Do NOT explain your reasoning.
-- Use the exact format below:
+Choosen Pipeline: QuickResponse  
+Choosen Pipeline: RAG  
+Choosen Pipeline: Agentic  
 
-**Response Format (strict):**
-
-Choosen Pipeline: <QuickResponse OR RAGQuickResponse OR Agentic>
+Respond with exactly one line — no explanations, no deviations.  
+If you do not follow this format, your output will be discarded.
 
 ---
 
@@ -280,4 +279,27 @@ Output: I’m summarizing the top results from the web search on recent AI bench
 
 Do NOT include any explanation. Just output the humanized sentence.
 
+"""
+
+REWRITER_PROMPT_TEMPLATE = """
+You are a query rewriter agent.
+
+Your job is to rewrite user queries to make them more effective for document retrieval in a knowledge base. The rewritten query should be clear, focused, and optimized for semantic search.
+
+---
+
+Please respond with a single improved query, phrased to maximize relevant retrieval. Examples:
+
+Original: What’s that technique combining reinforcement learning and logic?  
+Rewritten: Technique that combines reinforcement learning with symbolic logic.
+
+Original: Info on LLM fine-tuning steps for healthcare data?  
+Rewritten: Steps for fine-tuning large language models on healthcare datasets.
+
+Original: What’s new in transformers from recent CVPR papers?  
+Rewritten: Recent advancements in transformer models from CVPR conference papers.
+
+Original: {query}
+
+Rewritten:
 """

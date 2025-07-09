@@ -1,6 +1,6 @@
 from memory.memory import AgentMemory
 from parsers import parse_router
-from agents import run_router, run_quickresponse, run_summarizer
+from agents import run_router, run_quickresponse, run_summarizer, run_rewriter
 from pipelines import agentic_behaviour, planner_behaviour
 from agents import instance_agent, instance_llm
 from tools import initialize_tools
@@ -11,6 +11,7 @@ memory = AgentMemory()
 
 tools = initialize_tools(memory)
 llm = instance_llm()
+deterministic_llm = instance_llm(temperature=0.0)
 agent = instance_agent(llm=llm, tools=tools)
 
 def main():
@@ -21,18 +22,22 @@ def main():
     while True:
         try:
             question = input("Enter your question (or type 'exit' to quit): ")
-
             if question.lower() == 'exit':
                 break
             
             memory.chat_history.append({"role": "user", "content": question})
 
-            # Perform similarity search in the vector store
-            retrieved_context = similarity_search(question, vectorstore)
+            ## Rewriting the question for max effectiveness of retrieval
+            rewrited_question = run_rewriter(llm,question)
 
-            decision = parse_router(run_router(llm, question, 
-                                               context=memory, 
-                                               retrieved_context=retrieved_context)) 
+            #print(f"Rewritten question: {rewrited_question}")
+
+            ## Perform similarity search in the vector store
+            retrieved_context = similarity_search(rewrited_question, vectorstore)
+            
+            router_answer = run_router(deterministic_llm, question, context=memory, retrieved_context=retrieved_context)
+
+            decision = parse_router(router_answer) 
 
             print(f"Decision made by the router: {decision}")
 
@@ -49,7 +54,7 @@ def main():
                 # Add the new conversation to the RAG system
                 add_to_rag(vectorstore, embeddings)
             
-            elif decision == "RAGQuickResponse":
+            elif decision == "RAG":
                 response = run_quickresponse(llm, question, 
                                              context=memory, 
                                              retrieved_context=retrieved_context, 

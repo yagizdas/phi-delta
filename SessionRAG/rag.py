@@ -78,14 +78,11 @@ def similarity_search(query: str, vector_store: FAISS, k: int = 4) -> list[Docum
         return "ERROR: Query cannot be empty."
     
     results = vector_store.similarity_search(query, k=k)
+    results_summary = ""
     for doc in results:
+        results_summary  += f"- {doc.page_content[:600]}...\n"
 
-        results[results.index(doc)] = Document(
-            page_content=doc.page_content,
-            metadata=doc.metadata
-        )
-
-    return results
+    return results_summary
     
 if __name__ == "__main__":
     # For testing purposes only
