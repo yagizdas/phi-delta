@@ -3,14 +3,17 @@
 from prompts import QUICKRESPONSE_PROMPT_TEMPLATE
 from memory.memory import AgentMemory
 
-def run_quickresponse(reasoning_llm, question: str, context: AgentMemory) -> str:
+def run_quickresponse(reasoning_llm, question: str, context: AgentMemory, retrieved_context: str = "", rag: bool = False) -> str:
 
-    quickresponse_prompt = QUICKRESPONSE_PROMPT_TEMPLATE.format(context=context.chat_summary)
+    if not rag:
+        quickresponse_prompt = QUICKRESPONSE_PROMPT_TEMPLATE.format(context=context.chat_summary)
+    else:
+        quickresponse_prompt = QUICKRESPONSE_PROMPT_TEMPLATE.format(context=context.chat_summary, retrieved_context=retrieved_context)
 
     result = reasoning_llm.invoke([
 
         {"role": "system", "content": quickresponse_prompt},
-        {"role": "user", "content": f"Task: {question}"}
+        {"role": "user", "content": f"{question}"}
 
     ])
 

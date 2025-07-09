@@ -41,4 +41,4 @@ MODEL_NAME= "phi-4-IQ4_XS"
 
 EMBEDDER_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 
-ADDED_FILES_PATH = "added_files.txt"
+ADDED_FILES = "added_files.txt"

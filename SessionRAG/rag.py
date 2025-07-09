@@ -3,8 +3,9 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.document_loaders import PyMuPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-
+from langchain.docstore.in_memory import InMemoryDocstore
 import os
+import faiss
 
 from config import MAIN_PATH
 from .setup_emb import setup_embedder
@@ -16,13 +17,24 @@ def init_rag():
 
     embeddings = setup_embedder()
 
-    #docs are empty for initialization
-    docs = []
+    # Get embedding dimension from dummy query
+    dim = len(embeddings.embed_query("dummy"))
 
-    embeddings = setup_embedder()
+    # Initialize empty FAISS index
+    index = faiss.IndexFlatL2(dim)
 
-    vector_store = FAISS.from_documents(docs, embeddings)
+    # Empty docstore and ID map
+    docstore = InMemoryDocstore({})
+    index_to_docstore_id = {}
 
+    # Create empty FAISS vector store
+    vector_store = FAISS(
+        embedding_function=embeddings,
+        index=index,
+        docstore=docstore,
+        index_to_docstore_id=index_to_docstore_id,
+    )
+    
     return vector_store, embeddings
 
 
@@ -34,12 +46,13 @@ def add_to_rag(vector_store: FAISS, embeddings: HuggingFaceEmbeddings = None, pd
 
     if not files:
         raise FileNotFoundError("No PDF files found in the specified directory.")
+    
     try:
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
 
         for file in files:
 
-            if is_file_added(file, pdfs_path):
+            if is_file_added(file):
                 print("✅ File already added to RAG system, Skipping...")
                 continue
 
@@ -48,6 +61,7 @@ def add_to_rag(vector_store: FAISS, embeddings: HuggingFaceEmbeddings = None, pd
                 loader = PyMuPDFLoader(os.path.join(pdfs_path, file))
                 docs = loader.load()
                 splits = text_splitter.split_documents(docs)
+
                 vector_store.add_documents(splits)
                 mark_as_added(file)
                 print(f"✅ Added {file} to RAG system.")
@@ -56,12 +70,36 @@ def add_to_rag(vector_store: FAISS, embeddings: HuggingFaceEmbeddings = None, pd
         print(f"❌ Error while adding files to RAG system: {e}")
         raise e
     
+def similarity_search(query: str, vector_store: FAISS, k: int = 4) -> list[Document]:
+    """
+    Performs a similarity search on the vector store.
+    """
+    if not query:
+        return "ERROR: Query cannot be empty."
+    
+    results = vector_store.similarity_search(query, k=k)
+    for doc in results:
+
+        results[results.index(doc)] = Document(
+            page_content=doc.page_content,
+            metadata=doc.metadata
+        )
+
+    return results
+    
 if __name__ == "__main__":
     # For testing purposes only
     vector_store, embeddings = init_rag()
     print("RAG system initialized with empty vector store.")
-    
-    
+
     # Add to RAG
     add_to_rag(vector_store, embeddings)
     print("RAG system updated with new documents.")
+
+    # Test similarity search
+    query = "Climate policy under the Obama administration"
+    results = similarity_search(query, vector_store)
+    print(f"Found {len(results)} relevant documents for the query '{query}':")
+    for doc in results:
+        print(f"- {doc.page_content[:600]}...")
+#     print("Similarity search completed.")

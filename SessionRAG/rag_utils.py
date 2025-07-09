@@ -21,7 +21,7 @@ def get_added_files(pdfs_path: str = MAIN_PATH) -> set:
     
     return set(added_files)
 
-def if_file_added(file_name: str, pdfs_path: str = MAIN_PATH) -> bool:
+def is_file_added(file_name: str, pdfs_path: str = MAIN_PATH) -> bool:
     """
     Checks if a file has already been added to the RAG system.
     """
