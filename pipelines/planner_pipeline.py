@@ -6,7 +6,8 @@ from typing import List
 
 def planner_behaviour(llm: ChatOpenAI, 
                       question :str, 
-                      memory: AgentMemory) -> List[str]:
+                      memory: AgentMemory,
+                      debug: bool = False) -> List[str]:
 
     memory.chat_history.append({"role":"user","content":question})
     
@@ -14,7 +15,8 @@ def planner_behaviour(llm: ChatOpenAI,
 
     critic_answer = run_critic(llm, planner_answer)
 
-    print("\n\nCritized plan:",critic_answer,"\n\n")
+    if debug:
+        print("\nPlan to be executed:",critic_answer,"\n\n")
 
     p_c_a = parse_critic_plan(critic_answer)
 

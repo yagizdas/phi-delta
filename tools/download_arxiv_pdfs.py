@@ -22,7 +22,7 @@ def download_arxiv_pdfs(choices: List[int], links: List[str], save_directory: st
     Path(save_directory).mkdir(parents=True, exist_ok=True)
 
     for choice in choices:
-        if choice < 0 or choice >= len(links):
+        if choice <= 0 or choice > len(links):
             print(f"❌ Invalid choice: {choice}. Try again.")
             continue
         

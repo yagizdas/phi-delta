@@ -274,6 +274,7 @@ HUMANIZER_PROMPT_TEMPLATE = """
 You are a humanizer agent.
 
 Your job is to convert structured agent plan steps into clear, natural, human-sounding action sentences. These should feel like someone narrating what they’re doing step-by-step in plain language.
+Try to keep the sentences concise, but informative. Avoid technical jargon or overly complex language. Do not refer to your role as an agent or mention tool names explicitly. Instead, focus on the action being taken.
 
 Here’s the input step:
 

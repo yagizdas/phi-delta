@@ -69,7 +69,7 @@ def search_arxiv_details(query: str, memory, max_results: int = 3, ) -> str:
         return f"An error occurred during ArXiv search: {e}"
 
 
-def search_arxiv_tool_input(input_data: str, memory: AgentMemory) -> str:
+def search_arxiv_tool_input(input_data: str, memory: AgentMemory, debug: bool = False) -> str:
     query = ""
     max_results = 3  # default fallback
 
@@ -81,8 +81,9 @@ def search_arxiv_tool_input(input_data: str, memory: AgentMemory) -> str:
         input_data = input_data.strip()
         if not input_data:
             return "Empty input received. Please provide a search query."
-
-        print("Input is a string, trying to parse it...")
+    
+        if debug:
+            print("Input is a string, trying to parse it...")
 
         # First attempt: try JSON-style input
         try:
@@ -92,7 +93,8 @@ def search_arxiv_tool_input(input_data: str, memory: AgentMemory) -> str:
             query = parsed.get("query", "")
             max_results = parsed.get("max_results", 3)
 
-            print(f"Parsed JSON: query={query}, max_results={max_results}")
+            if debug:
+                print(f"Parsed JSON: query={query}, max_results={max_results}")
 
         except json.JSONDecodeError:
             print("Failed JSON parsing. Falling back to regex parsing...")

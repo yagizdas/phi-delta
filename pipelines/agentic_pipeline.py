@@ -30,7 +30,9 @@ def agentic_behaviour(llm: ChatOpenAI,
         if log:
             print("\n\nagent ran\n\n")
 
-        summ, res = parse_agent(answer) 
+        summ, res = parse_agent(answer)
+
+        # print(f"\nFound Resources: {res}\n")
 
         # Since agent does not need all the summarized context, we only feed with the summary of the previous steps
         step_by_step_context += f"{answer}\n\n"
@@ -65,7 +67,7 @@ def agentic_behaviour(llm: ChatOpenAI,
             continue
 
         print("Done. Proceeding...\n\n")
-        
+
         if log:
             print("-"*130 + "\n\n")
         i += 1
