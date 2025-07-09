@@ -9,13 +9,16 @@ from . import phi4multimodal
 
 from memory.memory import AgentMemory
 
+from .search_and_summarize import search_and_summarize
 from .arxiv_tool import search_arxiv_tool_input
 from .download_arxiv_pdfs import bound_download_tool
 from .list_directory import list_files_tool_wrapper
 
+from agents import run_search_summarizer
+
 import json
 
-def initialize_tools(memory : AgentMemory) -> list[Tool]:
+def initialize_tools(llm, memory : AgentMemory) -> list[Tool]:
     """
     Initialize the tools used in the application.
     
@@ -26,8 +29,20 @@ def initialize_tools(memory : AgentMemory) -> list[Tool]:
         A list of initialized tools.
 
     """
-    search_tool = TavilySearchResults(max_results = 5, 
+
+    search_tool = TavilySearchResults(max_results = 3, 
                                       include_answer = True)
+    
+
+    search_tool = Tool.from_function(
+        name="search_tool",
+        func=lambda search: search_and_summarize(llm, search),
+        description=(
+            "Searches the web for up-to-date information, including breaking news. "
+            "Accepts a natural language query as input. "
+            "Example input: 'Your query here'")
+    )
+    
 
     code_tool = PythonREPLTool()
 
@@ -80,19 +95,21 @@ if __name__ == "__main__":
 
     arxiv_tool = [tool for tool in tools if tool.name == "arxiv_search"][0]
 
-    print("Try the ArXiv tool! Type your query below or type 'exit' to quit.\n")
+    search_tool = tools[0]  # Tavily search tool
+
+    #print("Try the ArXiv tool! Type your query below or type 'exit' to quit.\n")
 
     while True:
         user_query = input("Enter your query: ")
         print(user_query)
         try:
 
-            print("\nRunning arxiv_search tool...\n")
-            result = arxiv_tool.run(user_query)
+            print("\nRunning tool...\n")
+            result = search_tool.run(user_query)
             print("\n=== Tool Output ===\n")
             print(result)
             print("\n===================\n")
-
         except Exception as e:
             print(f"\n❌ Error while running tool: {e}\n")
+
 

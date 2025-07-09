@@ -4,11 +4,13 @@ from config import TOOL_DESCRIPTIONS
 from prompts import ROUTER_PROMPT_TEMPLATE
 from memory.memory import AgentMemory
 
-def run_router(reasoning_llm, query: str, context: AgentMemory, retrieved_context: str = "") -> str:
+def run_router(reasoning_llm, query: str, context: AgentMemory, retrieved_context: str = "", debug: bool = False) -> str:
 
     router_prompt = ROUTER_PROMPT_TEMPLATE.format(context=context.chat_summary, retrieved_context=retrieved_context, tools= TOOL_DESCRIPTIONS)
     
-    print(router_prompt)
+    if debug:
+        print("Router Prompt:")
+        print(router_prompt)
 
     result = reasoning_llm.invoke([
 

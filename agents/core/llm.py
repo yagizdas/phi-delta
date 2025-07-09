@@ -11,6 +11,6 @@ def instance_llm(temperature: float = 0.6):
 
         temperature=temperature,
 
-        base_url=LLM_PORT
+        base_url=LLM_PORT,
 
     )

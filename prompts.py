@@ -105,6 +105,24 @@ Your main goal is to provide helpful, factually grounded answers using the avail
 Now, based on all this, respond to the user's question:
 """
 
+SEARCH_SUMMARIZER_PROMPT_TEMPLATE = """You are a search summarizer agent. Your job is to summarize the results of a web search or document retrieval into a concise, informative response.
+Your summary should include:
+
+- Key findings or insights from the search results
+- Accurate and Relevant links, data and references
+
+EXAMPLE OUTPUT FORMAT:
+1. Key finding 1: [Brief description of the finding]
+[Link to source or document if applicable]
+2. Key finding 2: [Brief description of the finding]
+...
+
+Your output should be clear and structured. Your output will be used to provide other agents with a summary of the search results. If you break the format, the pipeline will not work correctly.
+
+Here is the search tool output that you need to summarize and gather key points from:
+
+{tool_output}
+"""
 
 PLANNER_PROMPT_TEMPLATE = """
 

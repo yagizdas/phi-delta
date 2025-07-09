@@ -7,18 +7,22 @@ from tools import initialize_tools
 from pd_secrets import OPENAI_API_KEY, TAVILY_API_KEY
 from SessionRAG import init_rag, add_to_rag, similarity_search
 
-memory = AgentMemory()
 
-tools = initialize_tools(memory)
-llm = instance_llm()
-deterministic_llm = instance_llm(temperature=0.0)
-agent = instance_agent(llm=llm, tools=tools)
+def main(debug: bool = False):
 
-def main():
-    
+    memory = AgentMemory()
+
+    llm = instance_llm()
+    deterministic_llm = instance_llm(temperature=0.0)
+
+    tools = initialize_tools(llm, memory)
+
+    agent = instance_agent(llm=llm, tools=tools)
+
     vectorstore, embeddings = init_rag()
     retrieved_context = ""
 
+    print("Setup Complete.\nWelcome to Phi Delta!\n\n")
     while True:
         try:
             question = input("Enter your question (or type 'exit' to quit): ")
@@ -35,11 +39,12 @@ def main():
             ## Perform similarity search in the vector store
             retrieved_context = similarity_search(rewrited_question, vectorstore)
             
-            router_answer = run_router(deterministic_llm, question, context=memory, retrieved_context=retrieved_context)
+            router_answer = run_router(deterministic_llm, question, context=memory, retrieved_context=retrieved_context, debug=debug)
 
             decision = parse_router(router_answer) 
 
-            print(f"Decision made by the router: {decision}")
+            if debug:
+                print(f"Decision made by the router: {decision}")
 
             if decision == "QuickResponse":
                 print(run_quickresponse(llm, question, context=memory))
@@ -49,10 +54,10 @@ def main():
                                   planner_behaviour(llm, question, memory), 
                                   question, 
                                   memory,
-                                  log=False)
+                                  debug)
                 
                 # Add the new conversation to the RAG system
-                add_to_rag(vectorstore, embeddings)
+                add_to_rag(vectorstore, embeddings, debug=debug)
             
             elif decision == "RAG":
                 response = run_quickresponse(llm, question, 

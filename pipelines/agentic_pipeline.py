@@ -27,7 +27,8 @@ def agentic_behaviour(llm: ChatOpenAI,
 
         answer, tools = run_agent(agent, plan[i], step_by_step_context)
 
-        print("\n\nagent ran\n\n")
+        if log:
+            print("\n\nagent ran\n\n")
 
         summ, res = parse_agent(answer) 
 
@@ -36,8 +37,7 @@ def agentic_behaviour(llm: ChatOpenAI,
 
         if log:
             print(f"\n\n {i}th Summary: ", summ, "\n\n")
-
-        print("\nAnswer: "+answer +"\n\n")
+            print("\nAnswer: "+answer +"\n\n")
 
         memory.chat_history.append({"role":"system","content": answer})
 
@@ -64,10 +64,13 @@ def agentic_behaviour(llm: ChatOpenAI,
 
             continue
 
-
+        print("Done. Proceeding...\n\n")
+        
         if log:
             print("-"*130 + "\n\n")
         i += 1
+
+    print("Response: ", answer)
 
 
     return

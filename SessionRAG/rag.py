@@ -38,7 +38,7 @@ def init_rag():
     return vector_store, embeddings
 
 
-def add_to_rag(vector_store: FAISS, embeddings: HuggingFaceEmbeddings = None, pdfs_path: str = MAIN_PATH):
+def add_to_rag(vector_store: FAISS, embeddings: HuggingFaceEmbeddings = None, pdfs_path: str = MAIN_PATH, debug: bool = False) -> None:
     """
     Adds new documents to the existing FAISS vector store.
     """
@@ -53,7 +53,10 @@ def add_to_rag(vector_store: FAISS, embeddings: HuggingFaceEmbeddings = None, pd
         for file in files:
 
             if is_file_added(file):
-                print("✅ File already added to RAG system, Skipping...")
+                
+                if debug:
+                    print("✅ File already added to RAG system, Skipping...")
+
                 continue
 
             if file.endswith('.pdf'):
@@ -64,7 +67,9 @@ def add_to_rag(vector_store: FAISS, embeddings: HuggingFaceEmbeddings = None, pd
 
                 vector_store.add_documents(splits)
                 mark_as_added(file)
-                print(f"✅ Added {file} to RAG system.")
+
+                if debug:
+                    print(f"✅ Added {file} to RAG system.")
 
     except Exception as e:
         print(f"❌ Error while adding files to RAG system: {e}")
