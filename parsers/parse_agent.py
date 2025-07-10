@@ -1,34 +1,22 @@
-def parse_agent(text: str):
+import re
+from typing import Tuple, List
 
-    summary = []
-    resources = []
-    summary_b = bool
-    resources_b = bool
+def parse_agent(text: str) -> Tuple[str, List[str]]:
+    """
+    Extracts the 'Summary' and 'Resources' sections from agent output.
 
-    for line in text.splitlines():
+    Returns:
+        - summary_string: Concatenated summary section (str)
+        - resources: List of resource lines (List[str])
+    """
+    # Use regex to extract the sections
+    summary_match = re.search(r"###\s*Summary:\s*(.*?)###\s*Resources:", text, re.DOTALL | re.IGNORECASE)
+    resources_match = re.search(r"###\s*Resources:\s*(.*?)($|###|\Z)", text, re.DOTALL | re.IGNORECASE)
 
-        line = line.strip()
-        
-        if "summary:" in line.lower():
-            summary_b = True
-            resources_b = False
-            continue
+    summary_string = summary_match.group(1).strip() if summary_match else ""
+    resources_block = resources_match.group(1).strip() if resources_match else ""
 
-        if "resources:" in line.lower():
-            summary_b = False
-            resources_b = True
-            continue
+    # Split resources into non-empty lines
+    resources = [line.strip() for line in resources_block.splitlines() if line.strip()]
 
-        if summary_b:
-            summary.append(line)
-
-        if resources_b:
-            resources.append(line)
-
-        summary_string = ""
-
-
-    for line in summary:
-        summary_string += line
-        
     return summary_string, resources

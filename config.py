@@ -28,6 +28,11 @@ You have access to the following tools:
    - Input: "" for listing ALL files, or "pdf", "jpeg" etc. to filter-search with special file types.
    - Output: The directories of the specified folders
 
+7. wolfram_search: Queries the Wolfram Alpha API for factual or computational answers. It is faster than the search_tool, but it is not as up-to-date as the search_tool.
+   - Input: a natural language question or expression
+   - Output: Wolfram Alpha’s computed result
+   - Example: "Derivative of sin(x)", "Population of Turkey in 2023", "Solve x^2 + 5x + 6 = 0"
+
 You are only allowed to plan steps that use these tools. Do not mention subscribing to newsletters, downloading apps, or using external social media platforms.
 
 You need to only solve the task. Do not add something suggestive.

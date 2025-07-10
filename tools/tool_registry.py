@@ -1,22 +1,17 @@
-from langchain_community.tools import TavilySearchResults
 from langchain_experimental.tools.python.tool import PythonREPLTool
-from langchain_community.utilities import ArxivAPIWrapper
 from langchain.tools import Tool
-from langchain_community.agent_toolkits.load_tools import load_tools
-from langchain.tools import StructuredTool
 
 from . import phi4multimodal
 
 from memory.memory import AgentMemory
-
 from .search_and_summarize import search_and_summarize
 from .arxiv_tool import search_arxiv_tool_input
 from .download_arxiv_pdfs import bound_download_tool
 from .list_directory import list_files_tool_wrapper
+from .wolfram_tool import run_wolfram_alpha_query
 
 from agents import run_search_summarizer
 
-import json
 
 def initialize_tools(llm, memory : AgentMemory) -> list[Tool]:
     """
@@ -72,7 +67,23 @@ def initialize_tools(llm, memory : AgentMemory) -> list[Tool]:
 
     )
 
-    tools = [search_tool, code_tool, multimodal_tool, arxiv_tool, download_tool, list_files_tool]
+    wolfram_tool = Tool.from_function(
+        name="wolfram_search",
+        func=lambda input_data: run_wolfram_alpha_query(query=input_data),
+        description=(
+            "Queries the Wolfram Alpha API for computational knowledge. "
+            "Accepts a natural language query as input. "
+            "Example input: 'What is the mass of the sun in kg?, or 'What is the integral of x^2?'"
+        )
+    )
+
+    tools = [search_tool, 
+             code_tool, 
+             multimodal_tool, 
+             arxiv_tool, 
+             download_tool, 
+             list_files_tool, 
+             wolfram_tool]
 
     return tools
 
@@ -85,12 +96,14 @@ if __name__ == "__main__":
     from memory.memory import AgentMemory
 
     memory = AgentMemory()  # initialize dummy memory
-
-    tools = initialize_tools(memory)
+    llm = None
+    tools = initialize_tools(llm, memory)
 
     arxiv_tool = [tool for tool in tools if tool.name == "arxiv_search"][0]
 
     search_tool = tools[0]  # Tavily search tool
+    
+    wolfram_tool = [tool for tool in tools if tool.name == "wolfram_search"][0]
 
     #print("Try the ArXiv tool! Type your query below or type 'exit' to quit.\n")
 
@@ -100,7 +113,7 @@ if __name__ == "__main__":
         try:
 
             print("\nRunning tool...\n")
-            result = search_tool.run(user_query)
+            result = wolfram_tool.run(user_query)
             print("\n=== Tool Output ===\n")
             print(result)
             print("\n===================\n")

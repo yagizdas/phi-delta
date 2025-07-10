@@ -322,3 +322,37 @@ Original: {query}
 
 Rewritten:
 """
+
+FINALIZER_PROMPT_TEMPLATE = """
+You are a finalizer agent.
+
+Your task is to produce a clear, concise, and human-friendly summary of the reasoning steps taken so far. The goal is to explain what has happened in a way that is natural and digestible for the user, avoiding technical jargon and internal agent terms.
+
+Use the step-by-step history below to construct your summary.
+
+---
+
+**The question and the actions taken for solving the question:**
+
+{step_history}
+
+---
+
+**Instructions:**
+- Write in the first person, as if you’re narrating the thought process to the user.
+- Focus on clarity and flow — imagine you're explaining what you've done so far to a curious, intelligent person with no access to system internals.
+- Don’t mention specific tool names, prompt templates, or internal terms like "pipeline" or "agent."
+- Instead, narrate the *actions* and *insights* derived.
+- At the end of your output, include a list of URLs or documents referenced in a section titled `### Resources:` — list each link or reference on a new line.
+- If there are no external resources, say `None.` under the `### Resources:` section.
+- You can also add a TL;DR or bulleted recap to help the user quickly grasp the answer.
+
+---
+
+Respond in the following format:
+
+###Your Explanation Here
+
+### Resources:
+[One per line, or 'None.']
+"""

@@ -8,6 +8,7 @@ class AgentMemory:
         self.arxiv_links: List[str] = []
         self.chat_history: List[Dict] = []
         self.chat_summary: str = ""
+        self.step_history: List[Dict] = []
 
     def add(self, role: str, content: str):
         self.chat_history.append({"role": role, "content": content})

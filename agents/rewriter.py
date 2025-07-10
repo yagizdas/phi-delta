@@ -1,4 +1,4 @@
-## File: phi_delta/agents/quickresponse.py
+## File: phi_delta/agents/rewriter.py
 
 from prompts import REWRITER_PROMPT_TEMPLATE
 

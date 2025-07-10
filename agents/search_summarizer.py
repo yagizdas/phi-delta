@@ -1,4 +1,4 @@
-## File: phi_delta/agents/quickresponse.py
+## File: phi_delta/agents/search_summarizer.py
 
 from prompts import SEARCH_SUMMARIZER_PROMPT_TEMPLATE
 

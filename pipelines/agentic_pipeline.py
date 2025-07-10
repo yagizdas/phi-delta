@@ -1,4 +1,4 @@
-from agents import run_agent, run_evaluator, run_humanizer
+from agents import run_agent, run_evaluator, run_humanizer, run_finalizer
 from parsers import parse_agent, parse_eval
 from langchain_openai import ChatOpenAI
 from memory.memory import AgentMemory
@@ -11,26 +11,39 @@ def agentic_behaviour(llm: ChatOpenAI,
                       memory: AgentMemory, 
                       log :bool = False) -> list:
 
-    i = 0
+    i,j = 0,1
     
     step_by_step_context = "Summary of the previous steps:"
 
+    ## Clearing the step history
+    memory.step_history.clear()
+
+    memory.step_history.append({"question":question})
+
     while i < len(plan):
+
         
         if log:
             print("-"*60 + f" {i}th Step " + "-"*60)
 
-        print(run_humanizer(llm, plan[i]))
+        humanized_step_desc = run_humanizer(llm, plan[i])
+
+
+        print(humanized_step_desc)
 
         if log:
             print(f"\n\n {i}th Context (Summary): ", memory.chat_summary, "\n\n")
 
         answer, tools = run_agent(agent, plan[i], step_by_step_context)
 
+        memory.step_history.append({f"Step {j}":humanized_step_desc, f"Report {j}":answer})
+
         if log:
             print("\n\nagent ran\n\n")
 
         summ, res = parse_agent(answer)
+
+        print("Resources: ",res)
 
         # print(f"\nFound Resources: {res}\n")
 
@@ -63,16 +76,20 @@ def agentic_behaviour(llm: ChatOpenAI,
             memory.chat_history.append({"role":"system","content":evaluation})
 
             i = 0
+            j += 1
 
             continue
 
-        print("Done. Proceeding...\n\n")
+        #print("Done. Proceeding...\n\n")
 
         if log:
             print("-"*130 + "\n\n")
-        i += 1
 
-    print("Response: ", answer)
+        i += 1
+        j += 1
+
+    finalized_answer = run_finalizer(llm,memory)
+    print("Response: ", finalized_answer)
 
 
     return
