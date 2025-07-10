@@ -68,6 +68,48 @@ The tools available to the Agentic pipeline are:
 {tools}
 """
 
+RAG_ROUTER_PROMPT_TEMPLATE = """
+You are a router agent. Your job is to classify the user's latest message, and the response into the next step.
+
+You MUST choose exactly one of the following options. Do not explain your choice. Do not output anything else.
+
+The user may ask questions back to back. Below is helpful information to guide your decision:
+
+The users request was:
+{question}
+
+The response was:
+{response}
+
+Always consider the conversation context before deciding. RETRIEVED INFORMATION IS 100% TRUSTED.
+
+---
+
+**Available Pipelines:**
+
+1) ESCALATE  
+Use this if the user's query did not fulfilled. 
+Choose this if:
+- the task is detailed and needs to be planned like "Summarize this paper's all of the methods used, and the results of the methods compared."
+- Multi-Document needed approaches to answer the question
+- Situations where more than one keyword search is needed to complete the task throughoutly.
+
+2) STAY
+Choose this when the user's question was responded throughoutly and it if fulfilled.
+If the user's query is covered by the response. You should choose STAY option.
+
+---
+
+IMPORTANT: You MUST respond with exactly one of the following options:
+
+Choosen Pipeline: ESCALATE  
+Choosen Pipeline: STAY
+
+Respond with exactly one line — no explanations, no deviations.  
+If you do not follow this format, your output will be discarded.
+
+"""
+
 QUICKRESPONSE_PROMPT_TEMPLATE = """
 
 You are a helpful assistant named "Phi Delta" that is aimed to help researchers and curious people about their tasks. You have a variety of tools that you can use, and your main goal is to help the user as much as possible in a positive way. You can answer questions about daily life and basic questions.

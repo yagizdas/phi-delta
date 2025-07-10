@@ -1,6 +1,6 @@
 from memory.memory import AgentMemory
 from parsers import parse_router
-from agents import run_router, run_quickresponse, run_summarizer, run_rewriter
+from agents import run_router, run_quickresponse, run_summarizer, run_rewriter, run_RAG_router
 from pipelines import agentic_behaviour, planner_behaviour
 from agents import instance_agent, instance_llm
 from tools import initialize_tools
@@ -65,8 +65,22 @@ def main(debug: bool = False):
                                              retrieved_context=retrieved_context, 
                                              rag=True)
                 
-                print(response)
+                routed_rag = run_RAG_router(llm, query=question, 
+                                            response=response, 
+                                            debug=debug)
+                
+                rag_decision = parse_router(response=routed_rag,
+                                           debug=debug)
+                
+                print(rag_decision)
 
+                if rag_decision == "ESCALATE":
+                    #rag_agent_behaviour()
+                    pass
+
+                else:
+                    pass
+                                        
             # Update conversation history and generate summary
             memory.chat_summary = run_summarizer(llm, memory)
 
