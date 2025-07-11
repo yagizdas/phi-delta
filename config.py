@@ -38,6 +38,34 @@ You are only allowed to plan steps that use these tools. Do not mention subscrib
 You need to only solve the task. Do not add something suggestive.
 """
 
+RAG_TOOL_DESCRIPTIONS = """
+You have access to the following tools:
+
+1. search_tool: Use this to search the web for up-to-date information, including breaking news.
+   - Input: a natural language query
+   - Output: recent web results related to the query
+
+2. code_tool: Executes Python code.
+   - Input: a Python expression or block
+   - Output: the result of code execution (e.g., calculations, data analysis)
+
+3. multimodal_tool: Use this to analyze or interpret visual content in images or PDF files. 
+   - Input: an image or a PDF file (plus an optional page number if PDF), and a natural language prompt (e.g., "What does this chart show?" or "Summarize the content of page 2.")
+   - Output: A detailed answer, interpretation, or description based on the visual input, including reasoning over text, structure, layout, and imagery.
+
+4. list_directory_tool: Use this to check your directory. You can check out the previous files that are downloaded before you to gather information about their name to further analysis on the next steps.
+   - Input: "" for listing ALL files, or "pdf", "jpeg" etc. to filter-search with special file types.
+   - Output: The directories of the specified folders
+
+5. local_RAG_tool: Use this to check specific papers that you have in your directory. It accepts the file name (that you can check with list_directory tool) and a query.
+   - Input: 
+
+
+You are only allowed to plan steps that use these tools. Do not mention subscribing to newsletters, downloading apps, or using external social media platforms.
+
+You need to only solve the task. Do not add something suggestive. 
+
+"""
 MAIN_PATH = "./model_files/"
 
 LLM_PORT = "http://localhost:8000/v1"
@@ -47,3 +75,5 @@ MODEL_NAME= "phi-4-IQ4_XS"
 EMBEDDER_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 
 ADDED_FILES = "added_files.txt"
+
+SESSION_BASED_PATHING = "sessions/session_{session_id}/"

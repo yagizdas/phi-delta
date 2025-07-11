@@ -6,6 +6,7 @@ from agents import instance_agent, instance_llm
 from tools import initialize_tools
 from pd_secrets import OPENAI_API_KEY, TAVILY_API_KEY
 from SessionRAG import init_rag, add_to_rag, similarity_search
+from utils import create_session_id, create_session_directory
 
 
 def main(debug: bool = False):
@@ -21,6 +22,14 @@ def main(debug: bool = False):
 
     vectorstore, embeddings = init_rag()
     retrieved_context = ""
+
+    session_id = create_session_id()
+
+    print(f"Session ID: {session_id}\n")
+
+    session_path = create_session_directory(session_id=session_id)
+    
+    print(f"Session Path: {session_path}\n")
 
     print("Setup Complete.\nWelcome to Phi Delta!\n\n")
     while True:
@@ -42,7 +51,7 @@ def main(debug: bool = False):
             router_answer = run_router(deterministic_llm, question, context=memory, retrieved_context=retrieved_context, debug=debug)
 
             decision = parse_router(router_answer) 
-
+            
             if debug:
                 print(f"Decision made by the router: {decision}")
 
@@ -50,6 +59,7 @@ def main(debug: bool = False):
                 print(run_quickresponse(llm, question, context=memory))
 
             elif decision == "Agentic":
+
                 agentic_behaviour(llm, agent, 
                                   planner_behaviour(llm, question, memory), 
                                   question, 
@@ -57,9 +67,12 @@ def main(debug: bool = False):
                                   debug)
                 
                 # Add the new conversation to the RAG system
-                add_to_rag(vectorstore, embeddings, debug=debug)
+                add_to_rag(vectorstore=vectorstore, 
+                           session_path=session_path, 
+                           debug=debug)
             
             elif decision == "RAG":
+
                 response = run_quickresponse(llm, question, 
                                              context=memory, 
                                              retrieved_context=retrieved_context, 
@@ -69,6 +82,8 @@ def main(debug: bool = False):
                                             response=response, 
                                             debug=debug)
                 
+                print(routed_rag)
+
                 rag_decision = parse_router(response=routed_rag,
                                            debug=debug)
                 
@@ -79,7 +94,8 @@ def main(debug: bool = False):
                     pass
 
                 else:
-                    pass
+                    ## Print the response immediately
+                    print(response)
                                         
             # Update conversation history and generate summary
             memory.chat_summary = run_summarizer(llm, memory)

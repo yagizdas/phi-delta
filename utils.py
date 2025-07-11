@@ -1,3 +1,8 @@
+import uuid
+from datetime import datetime
+from config import MAIN_PATH, SESSION_BASED_PATHING
+import os
+
 def extract_tool_names(conversation:dict) -> list[str]:
     tool_names = set()
     for msg in conversation.get('messages', []):
@@ -21,3 +26,30 @@ def extract_tool_names(conversation:dict) -> list[str]:
                     if 'name' in fn:
                         tool_names.add(fn['name'])
     return sorted(tool_names)
+
+
+def create_session_id() -> str:
+    """
+    Creates a unique session ID based on the current timestamp and a random UUID.
+    """
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    random_id = uuid.uuid4().hex[:2]  # Short random string
+    return f"{timestamp}_{random_id}"
+
+def create_session_directory(session_id: str, 
+                          pdfs_path: str = MAIN_PATH) -> str:
+    """
+    Creates a session-specific directory for storing files.
+    """
+    if session_id is None:
+        # Generate a unique session ID using timestamp and UUID
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        random_id = uuid.uuid4().hex[:2]  # Short random string
+        session_id = f"{timestamp}_{random_id}"
+
+    session_path = os.path.join(pdfs_path, SESSION_BASED_PATHING.format(session_id=session_id))
+    
+    if not os.path.exists(session_path):
+        os.makedirs(session_path)
+    
+    return session_path

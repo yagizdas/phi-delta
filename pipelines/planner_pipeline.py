@@ -11,12 +11,13 @@ def planner_behaviour(llm: ChatOpenAI,
 
     memory.chat_history.append({"role":"user","content":question})
     
+    if debug: print("\nplanner started\n")
+
     planner_answer = run_planner(llm, question, memory)
 
     critic_answer = run_critic(llm, planner_answer)
 
-    if debug:
-        print("\nPlan to be executed:",critic_answer,"\n\n")
+    if debug: print("\nPlan to be executed:",critic_answer,"\n\n")
 
     p_c_a = parse_critic_plan(critic_answer)
 
