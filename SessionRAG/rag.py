@@ -13,6 +13,9 @@ from .rag_utils import mark_as_added, is_file_added
 
 from langchain_community.vectorstores import Chroma
 
+from utils import create_session_id, create_session_directory
+
+
 ADDED_FILES = "added_files.txt"
 
 def init_rag() -> tuple:
@@ -98,8 +101,8 @@ def add_to_rag(vectorstore,
         print(f"❌ Error while adding files to RAG system: {e}")
         raise e
     
-def similarity_search(query: str, 
-                      vectorstore, 
+def similarity_search(vectorstore, 
+                      query: str, 
                       target:str = None, 
                       k: int = 4,
                       debug: bool = False) -> str:
@@ -116,16 +119,23 @@ def similarity_search(query: str,
             results = vectorstore.similarity_search(query=query,
                                                         k=k,
                                                         filter={"source":target})
+            short = 300
+            
         else:
+            if debug: print("No target specified, searching across all documents.")
+
             results = vectorstore.similarity_search(query=query, 
                                                     k=k)
+            short = 600
+            
+        results_summary = "\n".join(
+            [f"- {doc.page_content[:short].strip()}" for doc in results]
+            )
 
-        if debug: print(f"Type: {type(results[0])}\n Results: {results}\n")
+        #if debug: print(f"Type: {type(results[0])}\n Results: {results}\n")
 
         ## Format results for better readability for the model. Summarizes the content
-        results_summary = "\n".join(
-            [f"- {doc.page_content[:600].strip()}" for doc in results]
-            )
+
 
         return results_summary
 
@@ -134,20 +144,29 @@ def similarity_search(query: str,
 
 
 if __name__ == "__main__":
-    # For testing purposes only
+    # For testing purposes only, will be removed soon.
+
     vector_store, embeddings = init_rag()
     print("RAG system initialized with empty vector store.")
 
+    session_id = create_session_id()
+
+    print(f"Session ID: {session_id}\n")
+
+    session_path = create_session_directory(session_id=session_id)
+    
+    print(f"Session Path: {session_path}\n")
+
     # Add to RAG
-    add_to_rag(vector_store, debug=True)
+    add_to_rag(vector_store, session_path=session_path, debug=True)
     print("RAG system updated with new documents.")
 
     # Test similarity search
-    query = "Einstein theory of relativity"
+    query = "abstract"
 
-    results = similarity_search(query, 
-                                vector_store, 
-                                "Albert_Einstein:_Rebellious_Wunderkind.pdf", 
+    results = similarity_search(vectorstore=vector_store, 
+                                query=query, 
+                                target="Albert_Einstein:_Rebellious_Wunderkind.pdf", 
                                 debug=True)
 
     print(f"Found {len(results)} relevant documents for the query '{query}':")

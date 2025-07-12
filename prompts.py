@@ -36,11 +36,10 @@ Use this if the query is simple, casual, or conversational. This includes:
 Even if the question references a past tool use or step, if the user is asking *about* the past (not to redo or expand on it), stay in **QuickResponse**.
 
 2) RAG  
-Choose this when the user asks a technical, factual, or academic question.
-If the user's query can be answered directly from retrieved docs, choose this — even if phrased casually.
+Choose this If the user's query can be answered directly from retrieved docs, choose this — even if phrased casually.
 
 Choose this if:
-- The Retrieved Context above contains relevant information about the question
+- **IMPORTANT:** The Retrieved Context above contains relevant information about the question
 - The question is straightforward and can be answered with the retrieved information
 - The question is about a technical or academic topic
 - The retrieved information appears sufficient to answer it without further reasoning or planning
@@ -89,12 +88,14 @@ Examples:
 - The task involves detailed analysis, summarization, or multi-document approaches.
 - The response lacks sufficient depth or completeness to fulfill the user's request.
 - The user's query requires further reasoning, planning, or tool use beyond the current response.
+- The user explicitly asks for a task that requires accessing or summarizing external files, folders, or documents, and the response does not fulfill this request.
 
 2) STAY  
 Choose this if the user's query was fully answered and does NOT require additional steps.  
 Examples:
 - The response directly addresses the user's query with sufficient detail.
 - The user's query is simple or straightforward, and the response fulfills it completely.
+- The user does not require further reasoning, planning, or tool use.
 
 ---
 

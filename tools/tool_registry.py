@@ -9,11 +9,12 @@ from .arxiv_tool import search_arxiv_tool_input
 from .download_arxiv_pdfs import bound_download_tool
 from .list_directory import list_files_tool_wrapper
 from .wolfram_tool import run_wolfram_alpha_query
+from .rag_tool import rag_search_wrapper
 
-from agents import run_search_summarizer
 
-
-def initialize_tools(llm, memory : AgentMemory) -> list[Tool]:
+def initialize_tools(llm, memory : AgentMemory, 
+                     vectorstore, 
+                     debug: bool = False) -> list[Tool]:
     """
     Initialize the tools used in the application.
     
@@ -77,13 +78,26 @@ def initialize_tools(llm, memory : AgentMemory) -> list[Tool]:
         )
     )
 
+    rag_tool = Tool.from_function(
+        name="rag_search",
+        func=lambda input_data: rag_search_wrapper(vectorstore=vectorstore,
+                                                   input_string=input_data,
+                                                   debug=debug),
+        description=(
+            "Performs a similarity search in the vector store and returns the results. "
+            "Accepts a query string and a file name as input. "
+            "Example input: 'query: your search query here, file: your_file_name.pdf'"
+        )
+    )
+
     tools = [search_tool, 
              code_tool, 
              multimodal_tool, 
              arxiv_tool, 
              download_tool, 
              list_files_tool, 
-             wolfram_tool]
+             wolfram_tool,
+             rag_tool]
 
     return tools
 

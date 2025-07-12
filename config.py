@@ -15,7 +15,10 @@ You have access to the following tools:
    - Input: a Python expression or block
    - Output: the result of code execution (e.g., calculations, data analysis)
 
-4. multimodal_tool: Use this to analyze or interpret visual content in images or PDF files. 
+4. multimodal_tool: Use this to analyze or interpret visual content in images or PDF files. Not intended for use for full RAG tasks, but rather for quick visual analysis. 
+   You should use the rag_tool for more extensive RAG tasks. 
+   You should use this tool when you want to analyze a specific image or PDF page, a graph or an image on a pdf, not for general RAG tasks. 
+   This tools usage is very resource heavy, so use it wisely and pick rag_tool if it is possible.
    - Input: an image or a PDF file (plus an optional page number if PDF), and a natural language prompt (e.g., "What does this chart show?" or "Summarize the content of page 2.")
    - Output: A detailed answer, interpretation, or description based on the visual input, including reasoning over text, structure, layout, and imagery.
 
@@ -32,6 +35,13 @@ You have access to the following tools:
    - Input: a natural language question or expression
    - Output: Wolfram Alpha’s computed result
    - Example: "Derivative of sin(x)", "Population of Turkey in 2023", "Solve x^2 + 5x + 6 = 0"
+
+8. rag_tool: Use this to perform a similarity search on locally stored documents in the vector store. This tool is ideal for retrieving relevant information from specific files based on a query.
+   - Input: A string containing the "query" and an optional "file" name. Example: query: your query here, file: your_file_path.pdf
+   - Input: If no file is specified, the tool will search across all available documents in the vector store. Example: "query: your general query here"
+   - Output: A list of relevant document extractions matching the query.
+   - Note: Use this tool to retrieve specific information from documents you have previously added to the system. It is particularly useful for academic papers, reports, or any text-based files you have stored in the vector store.
+   - Important Note: The file names that are added to the vector store are the same as the file names in the "./model_files/" directory, so you can use the list_directory_tool to check the files you have in your directory first.
 
 You are only allowed to plan steps that use these tools. Do not mention subscribing to newsletters, downloading apps, or using external social media platforms.
 
@@ -66,6 +76,7 @@ You are only allowed to plan steps that use these tools. Do not mention subscrib
 You need to only solve the task. Do not add something suggestive. 
 
 """
+
 MAIN_PATH = "./model_files/"
 
 LLM_PORT = "http://localhost:8000/v1"

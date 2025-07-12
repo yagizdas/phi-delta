@@ -16,12 +16,16 @@ def main(debug: bool = False):
     llm = instance_llm()
     deterministic_llm = instance_llm(temperature=0.0)
 
-    tools = initialize_tools(llm, memory)
-
-    agent = instance_agent(llm=llm, tools=tools)
-
     vectorstore, embeddings = init_rag()
-    retrieved_context = ""
+
+    tools = initialize_tools(llm=llm, 
+                             memory=memory, 
+                             vectorstore=vectorstore,
+                             debug=debug)
+
+    agent = instance_agent(llm=llm, 
+                           tools=tools)
+
 
     session_id = create_session_id()
 
@@ -30,6 +34,10 @@ def main(debug: bool = False):
     session_path = create_session_directory(session_id=session_id)
     
     print(f"Session Path: {session_path}\n")
+
+    add_to_rag(vectorstore=vectorstore, 
+                           session_path=session_path, 
+                           debug=debug)
 
     print("Setup Complete.\nWelcome to Phi Delta!\n\n")
     while True:
@@ -41,16 +49,24 @@ def main(debug: bool = False):
             memory.chat_history.append({"role": "user", "content": question})
 
             ## Rewriting the question for max effectiveness of retrieval
-            rewrited_question = run_rewriter(llm,question)
+            rewrited_question = run_rewriter(reasoning_llm=llm,
+                                             question=question)
 
             #print(f"Rewritten question: {rewrited_question}")
 
-            ## Perform similarity search in the vector store
-            retrieved_context = similarity_search(rewrited_question, vectorstore)
+            ## Perform general similarity search in the vector store
+            retrieved_context = similarity_search(vectorstore=vectorstore, 
+                                                  query=rewrited_question,
+                                                  debug=debug)
             
-            router_answer = run_router(deterministic_llm, question, context=memory, retrieved_context=retrieved_context, debug=debug)
+            router_answer = run_router(reasoning_llm=deterministic_llm, 
+                                       query=question, 
+                                       context=memory, 
+                                       retrieved_context=retrieved_context, 
+                                       debug=debug)
 
-            decision = parse_router(router_answer) 
+            decision = parse_router(response=router_answer,
+                                    debug=debug) 
             
             if debug:
                 print(f"Decision made by the router: {decision}")
@@ -96,6 +112,7 @@ def main(debug: bool = False):
                 else:
                     ## Print the response immediately
                     print(response)
+            
                                         
             # Update conversation history and generate summary
             memory.chat_summary = run_summarizer(llm, memory)
@@ -105,7 +122,7 @@ def main(debug: bool = False):
             continue
 
 if __name__ == "__main__":
-    main()
+    main(debug=True)
 
 
         
