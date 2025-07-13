@@ -7,20 +7,27 @@ from typing import List
 def planner_behaviour(llm: ChatOpenAI, 
                       question :str, 
                       memory: AgentMemory,
+                      rag: bool = False,
                       debug: bool = False) -> List[str]:
+
+    if debug:
+        print("\n\nPlanner started with RAG mode: ", rag, "\n\n")
 
     memory.chat_history.append({"role":"user","content":question})
     
     if debug: print("\nplanner started\n")
 
-    planner_answer = run_planner(llm, question, memory)
+    planner_answer = run_planner(reasoning_llm=llm, 
+                                 question=question, 
+                                 context=memory,
+                                 rag=rag)
 
-    critic_answer = run_critic(llm, planner_answer)
+    critic_answer = run_critic(reasoning_llm=llm, 
+                               planner_response=planner_answer,
+                               rag=rag)
 
     if debug: print("\nPlan to be executed:",critic_answer,"\n\n")
 
-    p_c_a = parse_critic_plan(critic_answer)
-
     memory.chat_history.append({"role":"system","content":critic_answer})
 
-    return p_c_a
+    return parse_critic_plan(critic_answer)

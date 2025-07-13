@@ -8,8 +8,9 @@ def agentic_behaviour(llm: ChatOpenAI,
                       agent, 
                       plan: List[str], 
                       question: str,  
-                      memory: AgentMemory, 
-                      log :bool = False) -> list:
+                      memory: AgentMemory,
+                      rag: bool = False, 
+                      log: bool = False) -> list:
 
     i,j = 0,1
     
@@ -22,7 +23,6 @@ def agentic_behaviour(llm: ChatOpenAI,
 
     while i < len(plan):
 
-        
         if log:
             print("-"*60 + f" {i}th Step " + "-"*60)
 
@@ -34,7 +34,10 @@ def agentic_behaviour(llm: ChatOpenAI,
         if log:
             print(f"\n\n {i}th Context (Summary): ", memory.chat_summary, "\n\n")
 
-        answer, tools = run_agent(agent, plan[i], step_by_step_context)
+        answer, tools = run_agent(agent=agent,
+                                  step=plan[i], 
+                                  context=step_by_step_context,
+                                  rag=rag)
 
         memory.step_history.append({f"Step {j}":humanized_step_desc, f"Report {j}":answer})
 
@@ -56,7 +59,12 @@ def agentic_behaviour(llm: ChatOpenAI,
 
         memory.chat_history.append({"role":"system","content": answer})
 
-        evaluation = run_evaluator(llm, answer, plan[i], plan, question=question)
+        evaluation = run_evaluator(reasoning_llm=llm, 
+                                   action=answer, 
+                                   step=plan[i], 
+                                   steps=plan, 
+                                   question=question,
+                                   rag=rag)
 
         if log:
             print(f"\n\n {i}th Evaluation: ", evaluation, "\n\n")
@@ -68,6 +76,9 @@ def agentic_behaviour(llm: ChatOpenAI,
         
         elif isinstance(parsed_eval, str):
             
+            i = 0
+            j += 1  
+
             #declaring the new plan
             plan = parsed_eval
             
@@ -75,8 +86,7 @@ def agentic_behaviour(llm: ChatOpenAI,
 
             memory.chat_history.append({"role":"system","content":evaluation})
 
-            i = 0
-            j += 1
+            
 
             continue
 
@@ -89,7 +99,5 @@ def agentic_behaviour(llm: ChatOpenAI,
         j += 1
 
     finalized_answer = run_finalizer(llm,memory)
-    print("Response: ", finalized_answer)
 
-
-    return
+    return finalized_answer

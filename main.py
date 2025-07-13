@@ -9,7 +9,7 @@ from SessionRAG import init_rag, add_to_rag, similarity_search
 from utils import create_session_id, create_session_directory
 
 
-def main(debug: bool = False):
+def main(debug: bool = True):
 
     memory = AgentMemory()
 
@@ -36,8 +36,8 @@ def main(debug: bool = False):
     print(f"Session Path: {session_path}\n")
 
     add_to_rag(vectorstore=vectorstore, 
-                           session_path=session_path, 
-                           debug=debug)
+               session_path=session_path, 
+               debug=debug)
 
     print("Setup Complete.\nWelcome to Phi Delta!\n\n")
     while True:
@@ -76,11 +76,14 @@ def main(debug: bool = False):
 
             elif decision == "Agentic":
 
-                agentic_behaviour(llm, agent, 
-                                  planner_behaviour(llm, question, memory), 
-                                  question, 
-                                  memory,
-                                  debug)
+                answer = agentic_behaviour(llm=llm, 
+                                           agent=agent, 
+                                           plan=planner_behaviour(llm=llm, 
+                                                                  question=question, 
+                                                                  memory=memory), 
+                                           question=question, 
+                                           memory=memory,
+                                           log=debug)
                 
                 # Add the new conversation to the RAG system
                 add_to_rag(vectorstore=vectorstore, 
@@ -89,33 +92,46 @@ def main(debug: bool = False):
             
             elif decision == "RAG":
 
-                response = run_quickresponse(llm, question, 
+                response = run_quickresponse(reasoning_llm=llm, 
+                                             question=question, 
                                              context=memory, 
                                              retrieved_context=retrieved_context, 
                                              rag=True)
                 
-                routed_rag = run_RAG_router(llm, query=question, 
+                routed_rag = run_RAG_router(reasoning_llm=llm, 
+                                            query=question, 
                                             response=response, 
                                             debug=debug)
                 
-                print(routed_rag)
+                rag_decision = parse_router(response=routed_rag, debug=debug)
 
-                rag_decision = parse_router(response=routed_rag,
-                                           debug=debug)
+                if debug:
+                    print(f"\nRAG Decision: {rag_decision}\n")
                 
-                print(rag_decision)
-
                 if rag_decision == "ESCALATE":
-                    #rag_agent_behaviour()
-                    pass
+                    ## If the RAG router decides to escalate, we run the agentic behaviour focused in RAG tools
+                    answer = agentic_behaviour(llm=llm, 
+                                               agent=agent, 
+                                               plan=planner_behaviour(llm=llm, 
+                                                                      question=question, 
+                                                                      memory=memory, 
+                                                                      rag=True, 
+                                                                      debug=debug), 
+                                               question=question, 
+                                               memory=memory,
+                                               rag=True, 
+                                               log=debug)
 
                 else:
-                    ## Print the response immediately
-                    print(response)
+                    ## Get the answer from the response
+                    answer = response
             
                                         
             # Update conversation history and generate summary
-            memory.chat_summary = run_summarizer(llm, memory)
+            memory.chat_summary = run_summarizer(reasoning_llm=llm, 
+                                                 memory=memory)
+
+            print(f"\n\nAnswer: {answer}\n\n")
 
         except Exception as e:
             print(f"An error occurred: {e}")

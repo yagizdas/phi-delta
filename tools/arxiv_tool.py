@@ -121,5 +121,5 @@ def search_arxiv_tool_input(input_data: str, memory: AgentMemory, debug: bool = 
 
     #print(f"Running search with query='{query}', max_results={max_results}")
     result = search_arxiv_details(query=query, memory=memory, max_results=max_results)
-    #print(f"Search result: {result}")
+    print(f"Search result: {result}")
     return result

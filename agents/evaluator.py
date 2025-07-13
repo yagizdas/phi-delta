@@ -1,13 +1,22 @@
-from config import TOOL_DESCRIPTIONS
+from config import TOOL_DESCRIPTIONS, RAG_TOOL_DESCRIPTIONS
 from prompts import EVALUATOR_PROMPT_TEMPLATE
 
-def run_evaluator(reasoning_llm, action: str, step: str, steps, question:str) -> str:
+def run_evaluator(reasoning_llm, action: str, step: str, steps, question: str, rag: bool = False) -> str:
 
-    eval_prompt = EVALUATOR_PROMPT_TEMPLATE.format(
-        tools=TOOL_DESCRIPTIONS,
-        steps=steps,
-        question=question,
-    )
+    if rag:
+        eval_prompt = EVALUATOR_PROMPT_TEMPLATE.format(
+            tools=TOOL_DESCRIPTIONS,
+            steps=steps,
+            question=question,
+        )
+
+    else:
+        # Use the standard tool descriptions for non-RAG evaluation
+        eval_prompt = EVALUATOR_PROMPT_TEMPLATE.format(
+            tools=RAG_TOOL_DESCRIPTIONS,
+            steps=steps,
+            question=question,
+        )
 
     result = reasoning_llm.invoke([
 

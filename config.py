@@ -9,7 +9,7 @@ You have access to the following tools:
    - Input: A JSON string representing a dictionary with a "query" and optional "max_results".
      Example: {"query": "your search query here", "max_results": 3}
    - Output: A formatted string with the titles, summaries, arXiv IDs, and links to the papers.
-   - Note: DO NOT go more than 5 max_results...
+   - **IMPORTANT** Note: DO NOT go more than 4 max_results. Your system can not handle more than that.
 
 3. code_tool: Executes Python code.
    - Input: a Python expression or block
@@ -36,13 +36,6 @@ You have access to the following tools:
    - Output: Wolfram Alpha’s computed result
    - Example: "Derivative of sin(x)", "Population of Turkey in 2023", "Solve x^2 + 5x + 6 = 0"
 
-8. rag_tool: Use this to perform a similarity search on locally stored documents in the vector store. This tool is ideal for retrieving relevant information from specific files based on a query.
-   - Input: A string containing the "query" and an optional "file" name. Example: query: your query here, file: your_file_path.pdf
-   - Input: If no file is specified, the tool will search across all available documents in the vector store. Example: "query: your general query here"
-   - Output: A list of relevant document extractions matching the query.
-   - Note: Use this tool to retrieve specific information from documents you have previously added to the system. It is particularly useful for academic papers, reports, or any text-based files you have stored in the vector store.
-   - Important Note: The file names that are added to the vector store are the same as the file names in the "./model_files/" directory, so you can use the list_directory_tool to check the files you have in your directory first.
-
 You are only allowed to plan steps that use these tools. Do not mention subscribing to newsletters, downloading apps, or using external social media platforms.
 
 You need to only solve the task. Do not add something suggestive.
@@ -51,24 +44,21 @@ You need to only solve the task. Do not add something suggestive.
 RAG_TOOL_DESCRIPTIONS = """
 You have access to the following tools:
 
-1. search_tool: Use this to search the web for up-to-date information, including breaking news.
-   - Input: a natural language query
-   - Output: recent web results related to the query
-
-2. code_tool: Executes Python code.
-   - Input: a Python expression or block
-   - Output: the result of code execution (e.g., calculations, data analysis)
-
-3. multimodal_tool: Use this to analyze or interpret visual content in images or PDF files. 
+1. multimodal_tool: Use this to analyze or interpret visual content in images or PDF files. 
    - Input: an image or a PDF file (plus an optional page number if PDF), and a natural language prompt (e.g., "What does this chart show?" or "Summarize the content of page 2.")
    - Output: A detailed answer, interpretation, or description based on the visual input, including reasoning over text, structure, layout, and imagery.
 
-4. list_directory_tool: Use this to check your directory. You can check out the previous files that are downloaded before you to gather information about their name to further analysis on the next steps.
+2. list_directory_tool: Use this to check your directory. You can check out the previous files that are downloaded before you to gather information about their name to further analysis on the next steps.
    - Input: "" for listing ALL files, or "pdf", "jpeg" etc. to filter-search with special file types.
    - Output: The directories of the specified folders
 
-5. local_RAG_tool: Use this to check specific papers that you have in your directory. It accepts the file name (that you can check with list_directory tool) and a query.
-   - Input: 
+3. rag_tool: Use this to perform a similarity search on locally stored documents in the vector store. This tool is ideal for retrieving relevant information from specific files based on a query.
+   - Input: A string containing the "query" and an optional "file" name. Example: query: your query here, file: your_file_path.pdf
+   - Input: If no file is specified, the tool will search across all available documents in the vector store. Example: "query: your general query here"
+   - **Important** Input: Query should be one, if you want to search multiple queries, you have to use the rag_tool multiple times.
+   - Output: A list of relevant document extractions matching the query.
+   - Note: Use this tool to retrieve specific information from documents you have previously added to the system. It is particularly useful for academic papers, reports, or any text-based files you have stored in the vector store.
+   - Important Note: The file names that are added to the vector store are the same as the file names in the "./model_files/" directory, so you can use the list_directory_tool to check the files you have in your directory first.
 
 
 You are only allowed to plan steps that use these tools. Do not mention subscribing to newsletters, downloading apps, or using external social media platforms.

@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import List, Tuple
 from config import MAIN_PATH
 import ast
+import re 
 
 def bound_download_tool(input_indices_str, links):
     input_indices = ast.literal_eval(input_indices_str)  # Converts "[1, 2]" -> [1, 2]
@@ -32,8 +33,8 @@ def download_arxiv_pdfs(choices: List[int], links: List[str], save_directory: st
 
         doc_name = links[choice-1][-1]
         # Better Document Names
-        doc_name = doc_name.replace(" ", "_").replace("/","-") + ".pdf"
-
+        doc_name = re.sub(r'[^\w]', '_', doc_name) + ".pdf"
+        
         filepath = Path(save_directory) / doc_name 
 
         try:

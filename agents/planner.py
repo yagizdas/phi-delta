@@ -5,7 +5,10 @@ from prompts import PLANNER_PROMPT_TEMPLATE, RAG_PLANNER_PROMPT_TEMPLATE
 from memory.memory import AgentMemory
 
 
-def run_planner(reasoning_llm, question: str, context: AgentMemory, rag: bool = False) -> str:
+def run_planner(reasoning_llm, 
+                question: str, 
+                context: AgentMemory, 
+                rag: bool = False) -> str:
 
     if rag: 
         planner_prompt = RAG_PLANNER_PROMPT_TEMPLATE.format(context=context.chat_summary, tools=RAG_TOOL_DESCRIPTIONS)

@@ -35,11 +35,11 @@ Use this if the query is simple, casual, or conversational. This includes:
 
 Even if the question references a past tool use or step, if the user is asking *about* the past (not to redo or expand on it), stay in **QuickResponse**.
 
-2) RAG  
+2) RAG 
 Choose this If the user's query can be answered directly from retrieved docs, choose this — even if phrased casually.
 
 Choose this if:
-- **IMPORTANT:** The Retrieved Context above contains relevant information about the question
+- **IMPORTANT:** The Retrieved Context above contains relevant information about the question OR the users query is about a specific document or file that is downloaded prior.
 - The question is straightforward and can be answered with the retrieved information
 - The question is about a technical or academic topic
 - The retrieved information appears sufficient to answer it without further reasoning or planning
@@ -85,10 +85,11 @@ The response was:
 1) ESCALATE  
 Choose this if the user's query was NOT fully answered or requires additional steps to complete.  
 Examples:
+- The response is generic and does not address the user's specific request.
 - The task involves detailed analysis, summarization, or multi-document approaches.
 - The response lacks sufficient depth or completeness to fulfill the user's request.
-- The user's query requires further reasoning, planning, or tool use beyond the current response.
-- The user explicitly asks for a task that requires accessing or summarizing external files, folders, or documents, and the response does not fulfill this request.
+- The user's query explicitly asks for a task that requires accessing or summarizing external files, folders, or documents, and the response does not fulfill this request.
+- The user asks for specific information (e.g., a summary of a particular paper), but the response provides general information instead.
 
 2) STAY  
 Choose this if the user's query was fully answered and does NOT require additional steps.  
@@ -178,9 +179,14 @@ The tools available to the Agentic pipeline are:
 
 RAG_PLANNER_PROMPT_TEMPLATE = """
 
-You are a planning agent that has RAG capabilities, document ingestion and more. Break the task given from the user into high-qualityclear, tool-usable small number of steps (usually 3–7) that an autonomous agent can follow in sequence. Don't proceed with the steps. Refer to the tools when you think its logical to do. 
+You are a planning agent that has RAG capabilities, document ingestion and more. Break the task given from the user into high-qualityclear, tool-usable small number of steps (usually 2–7) that an autonomous agent can follow in sequence. Don't proceed with the steps. Refer to the tools when you think its logical to do. 
 
-To make more sense of the users input, there might be context available here: {context}
+Your tools are specialized in RAG search, document retrieval, and summarization. Use them to gather relevant information before planning. You are an agent focused on RAG capabilities, so you can use the tools to gather information and then plan the next steps.
+
+To make more sense of the users input, there might be context available here, feel free to not take account: {context}
+
+**IMPORTANT**: You are highly encouraged to use your same tools in different steps rather than using them all in one step, this will break the pipeline and the agent will not be able to continue.
+For Example: You can use the `rag_tool` to gather information about a specific document, then use the 'rag_tool' again to gather information about another document.
 
 The tools available to the RAG Agentic pipeline are:
 
@@ -218,118 +224,49 @@ CRITIC_PROMPT_TEMPLATE = """
     """
 
 EXECUTOR_PROMPT_TEMPLATE = """
+You are a step-by-step execution agent.
 
-    You are a step-by-step execution agent.
+Your job is to perform the following step provided by the planner agent.
 
-    Your job is to perform the following step provided by the planner agent.
+- Use tools ONLY if explicitly mentioned.
+- Use the provided context below ONLY if relevant:
 
-    - Use tools ONLY if explicitly mentioned.
-    - Use the provided context below ONLY if relevant:
-    {context}
+{context}
 
-    ---
+---
 
-    When you are done, respond in **exactly** the format below:
+When you are done, respond in **exactly** the format below:
 
-    ---
+---
 
-    ### Summary:
-    - You MUST list any names, URLs, locations, files, or outputs you found.
-    - Always include **lists** when the step returns a set of results.
+### Summary:
+- You MUST list any names, URLs, locations, files, or outputs you found.
+- Always include **lists** when the step returns a set of results.
 
-    ⚠️ Important: If you are selecting, filtering, or ranking items from a previously shown list (such as results from `arxiv_search`), you MUST refer to them using their **original numbered index** from that list (e.g., Paper 1, Paper 3).  
-    ❌ Do NOT renumber the items or invent a new list.  
-    ✅ Always preserve the original order and indexing — this is critical for tool continuity (e.g., for `download_tool` to function correctly).
+⚠️ Important: If you are selecting, filtering, or ranking items from a previously shown list (such as results from `arxiv_search`), you MUST refer to them using their **original numbered index** from that list (e.g., Paper 1, Paper 3).  
+❌ Do NOT renumber the items or invent a new list.  
+✅ Always preserve the original order and indexing — this is critical for tool continuity (e.g., for `download_tool` to function correctly).
 
-    ✅ Example summary after selecting papers:
-    - Selected papers: 1. Paper_1_name, 3. Paper_3_name...
+✅ Example summary after selecting papers:
+- Selected papers: 1. Paper_1_name, 3. Paper_3_name...
 
-    - If you used a tool, summarize its output clearly.
+- If you used a tool, summarize its output clearly.
 
-    - This summary will be used as memory for future steps. Do NOT skip any critical information.
+- This summary will be used as memory for future steps. Do NOT skip any critical information.
 
-    ### Resources:
-    List all links, references, file names, or other structured outputs. If none, say "None."
+### Resources:
+List all links, references, file names, or other structured outputs. If none, say "None."
 
-    ---
-    ### Tools:
-    {tools}
-"""
+---
 
-RAG_EXECUTOR_PROMPT_TEMPLATE = """
+### Instructions for Large Outputs:
+If the tool returns a large output (e.g., multiple papers), you MUST:
+1. Summarize the results briefly.
+2. Select relevant items based on the user's query or context.
+3. Do not hallucinate. You got this.
 
-    You are a step-by-step execution agent.
+---
 
-    Your job is to perform the following step provided by the planner agent.
-
-    - Use tools ONLY if explicitly mentioned.
-    - Use the provided context below ONLY if relevant:
-    {context}
-
-    ---
-
-    When you are done, respond in **exactly** the format below:
-
-    ---
-
-    ### Summary:
-    - You MUST list any names, URLs, locations, files, or outputs you found.
-    - Always include **lists** when the step returns a set of results.
-
-    ⚠️ Important: If you are selecting, filtering, or ranking items from a previously shown list (such as results from `arxiv_search`), you MUST refer to them using their **original numbered index** from that list (e.g., Paper 1, Paper 3).  
-    ❌ Do NOT renumber the items or invent a new list.  
-    ✅ Always preserve the original order and indexing — this is critical for tool continuity (e.g., for `download_tool` to function correctly).
-
-    ✅ Example summary after selecting papers:
-    - Selected papers: 1. Paper_1_name, 3. Paper_3_name...
-
-    - If you used a tool, summarize its output clearly.
-
-    - This summary will be used as memory for future steps. Do NOT skip any critical information.
-
-    ### Resources:
-    List all links, references, file names, or other structured outputs. If none, say "None."
-
-    ---
-    ### Tools:
-    {tools}
-"""
-
-RAG_EXECUTOR_PROMPT_TEMPLATE = """
-
-    You are a step-by-step execution agent.
-
-    Your job is to perform the following step provided by the planner agent.
-
-    - Use tools ONLY if explicitly mentioned.
-    - Use the provided context below ONLY if relevant:
-    {context}
-
-    ---
-
-    When you are done, respond in **exactly** the format below:
-
-    ---
-
-    ### Summary:
-    - You MUST list any names, URLs, locations, files, or outputs you found.
-    - Always include **lists** when the step returns a set of results.
-
-    ⚠️ Important: If you are selecting, filtering, or ranking items from a previously shown list (such as results from `arxiv_search`), you MUST refer to them using their **original numbered index** from that list (e.g., Paper 1, Paper 3).  
-    ❌ Do NOT renumber the items or invent a new list.  
-    ✅ Always preserve the original order and indexing — this is critical for tool continuity (e.g., for `download_tool` to function correctly).
-
-    ✅ Example summary after selecting papers:
-    - Selected papers: 1. Paper_1_name, 3. Paper_3_name...
-
-    - If you used a tool, summarize its output clearly.
-
-    - This summary will be used as memory for future steps. Do NOT skip any critical information.
-
-    ### Resources:
-    List all links, references, file names, or other structured outputs. If none, say "None."
-
-    ---
     ### Tools:
     {tools}
 """
