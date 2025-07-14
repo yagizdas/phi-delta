@@ -31,6 +31,8 @@ def agentic_behaviour(llm: ChatOpenAI,
 
         print(humanized_step_desc)
 
+        memory.thinkingsteps.append({"step": j, "description": humanized_step_desc})
+
         if log:
             print(f"\n\n {i}th Context (Summary): ", memory.chat_summary, "\n\n")
 
@@ -99,5 +101,7 @@ def agentic_behaviour(llm: ChatOpenAI,
         j += 1
 
     finalized_answer = run_finalizer(llm,memory)
-
+    
+    memory.thinkingsteps.clear()
+    
     return finalized_answer

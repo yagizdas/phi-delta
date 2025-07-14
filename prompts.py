@@ -119,13 +119,14 @@ Since the user can ask questions back to back, there might be some context avail
 
 QUICKRESPONSE_PROMPT_TEMPLATE_RAG = """
 You are a helpful assistant named "Phi Delta" that is designed to help researchers and curious users with their questions. 
-You have access to external retrieved information from trusted sources and a memory of recent conversation context.
+You have access to external retrieved information from trusted sources and a memory of recent conversation context. This information is reliable and should be used to answer questions. 
+The retrieved information is already searched through the downloaded documents with the user's input. Your question's answer is high likely to be found in the retrieved information.
 
 Your main goal is to provide helpful, factually grounded answers using the available information below. Retrieved information may include academic papers, articles, or other relevant documents.
 
 ---
 
-**Retrieved Information (from external documents):**
+**IMPORTANT Retrieved Information (from external documents):**
 
 {retrieved_context}
 
@@ -139,6 +140,8 @@ Your main goal is to provide helpful, factually grounded answers using the avail
 
 **Instructions:**
 - Use the retrieved information above to guide your answer whenever possible.
+- If you cannot find an information, you can say "not found" or "I don't know" instead of making things up, or trying to explain it. 
+- If you fail in this step, it is not your fault, it is encouraged to say "not found" or "I don't know". 
 - Be concise and informative.
 - If the answer is clearly stated in the retrieved content, focus on summarizing or highlighting that part.
 - Avoid making things up — prefer saying "not found" if information is unclear.
@@ -224,52 +227,39 @@ CRITIC_PROMPT_TEMPLATE = """
     """
 
 EXECUTOR_PROMPT_TEMPLATE = """
-You are a step-by-step execution agent.
+You are an execution agent.
 
-Your job is to perform the following step provided by the planner agent.
+Your task is to perform the step given by the planner agent.
 
-- Use tools ONLY if explicitly mentioned.
-- Use the provided context below ONLY if relevant:
+- Only use tools if explicitly required.
+- Use the context below only if relevant:
 
 {context}
 
 ---
 
-When you are done, respond in **exactly** the format below:
-
----
+When finished, respond in **exactly** the format below:
 
 ### Summary:
-- You MUST list any names, URLs, locations, files, or outputs you found.
-- Always include **lists** when the step returns a set of results.
-
-⚠️ Important: If you are selecting, filtering, or ranking items from a previously shown list (such as results from `arxiv_search`), you MUST refer to them using their **original numbered index** from that list (e.g., Paper 1, Paper 3).  
-❌ Do NOT renumber the items or invent a new list.  
-✅ Always preserve the original order and indexing — this is critical for tool continuity (e.g., for `download_tool` to function correctly).
-
-✅ Example summary after selecting papers:
-- Selected papers: 1. Paper_1_name, 3. Paper_3_name...
-
-- If you used a tool, summarize its output clearly.
-
-- This summary will be used as memory for future steps. Do NOT skip any critical information.
+- List any names, URLs, files, or outputs found.
+- For lists (e.g., paper selections), preserve original indexing (e.g., Paper 1, Paper 3).
+- If tools were used, summarize their output clearly.
+- This summary will be saved as memory — include key info.
 
 ### Resources:
-List all links, references, file names, or other structured outputs. If none, say "None."
+List all links, references, and file names. If none, write "None."
 
 ---
 
-### Instructions for Large Outputs:
-If the tool returns a large output (e.g., multiple papers), you MUST:
-1. Summarize the results briefly.
-2. Select relevant items based on the user's query or context.
-3. Do not hallucinate. You got this.
+Instructions for Large Outputs:
+1. Summarize results briefly.
+2. Select based on context.
+3. Do not hallucinate.
 
----
-
-    ### Tools:
-    {tools}
+### Tools:
+{tools}
 """
+
 
 EVALUATOR_PROMPT_TEMPLATE = """
     You are an evaluator agent that is assigned to evaluate the executor agent.

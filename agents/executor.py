@@ -1,4 +1,4 @@
-from config import TOOL_DESCRIPTIONS, RAG_TOOL_DESCRIPTIONS
+from config import TOOL_DESCRIPTIONS_DICT, RAG_TOOL_DESCRIPTIONS_DICT, TOOL_DESCRIPTIONS, RAG_TOOL_DESCRIPTIONS, parse_tool_descriptions
 from prompts import EXECUTOR_PROMPT_TEMPLATE
 from utils import extract_tool_names
 from memory.memory import AgentMemory
@@ -17,17 +17,34 @@ def run_agent(agent,
     Returns:
         tuple: A tuple containing the raw answer and a list of tools used.
     """
+
+    print(step)
+
+    tools_used = parse_tool_descriptions(step)
+
+    print(f"\n\nTools used: {tools_used}\n\n")
+    
+    tools = "" 
+
+    for tool in tools_used:
+
+        if not rag and tool in TOOL_DESCRIPTIONS_DICT:
+            tools += tool + ":" + TOOL_DESCRIPTIONS_DICT[tool] + "\n"
+
+        elif rag and tool in RAG_TOOL_DESCRIPTIONS_DICT:
+            tools += tool + ":" + RAG_TOOL_DESCRIPTIONS_DICT[tool] + "\n"
+
     if rag: 
         # If RAG is enabled, we might want to use different tool descriptions
         executor_prompt = EXECUTOR_PROMPT_TEMPLATE.format(
         context=context, 
-        tools=RAG_TOOL_DESCRIPTIONS
+        tools=tools
         )
 
     else:
         executor_prompt = EXECUTOR_PROMPT_TEMPLATE.format(
             context=context, 
-            tools=TOOL_DESCRIPTIONS
+            tools=tools
             )
     
     print(f"\n\nExecutor Prompt: {executor_prompt}\n\n")

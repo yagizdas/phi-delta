@@ -9,6 +9,7 @@ class AgentMemory:
         self.chat_history: List[Dict] = []
         self.chat_summary: str = ""
         self.step_history: List[Dict] = []
+        self.thinkingsteps: List[Dict] = []
 
     def add(self, role: str, content: str):
         self.chat_history.append({"role": role, "content": content})
@@ -32,7 +33,7 @@ class AgentMemory:
                 summary, _ = parse_agent(m["content"])  # use your existing parser
                 summaries.append(summary)
 
-        edited_summaries = "\n".join([f"{m['role'].capitalize()}: {m['content']}" for m in memory.chat_history])
+        edited_summaries = "\n".join([f"{m['role'].capitalize()}: {m['content']}" for m in self.chat_history])
 
         return edited_summaries
 

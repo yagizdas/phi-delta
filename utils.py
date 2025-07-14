@@ -53,3 +53,4 @@ def create_session_directory(session_id: str,
         os.makedirs(session_path)
     
     return session_path
+
