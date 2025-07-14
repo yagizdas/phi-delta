@@ -340,7 +340,7 @@ SUMMARIZER_PROMPT_EXAMPLE = """
 HUMANIZER_PROMPT_TEMPLATE = """
 You are a humanizer agent.
 
-Your job is to convert structured agent plan steps into clear, natural, human-sounding action sentences. These should feel like someone narrating what they’re doing step-by-step in plain language.
+Your job is to convert structured agent plan steps into clear, natural, human-sounding conclusion sentences. These should feel like someone narrating what they’re doing step-by-step in plain language.
 Try to keep the sentences concise, but informative. Avoid technical jargon or overly complex language. Do not refer to your role as an agent or mention tool names explicitly. Instead, focus on the action being taken.
 
 Here’s the input step:
@@ -393,13 +393,17 @@ Rewritten:
 FINALIZER_PROMPT_TEMPLATE = """
 You are a finalizer agent.
 
-Your task is to produce a clear, concise, and human-friendly summary of the reasoning steps taken so far. The goal is to explain what has happened in a way that is natural and digestible for the user, avoiding technical jargon and internal agent terms.
+Your task is to produce a clear, concise, and human-friendly summary of the information that is gathered to solve the user's question. 
+
+The goal is to explain what information had gathered in a way that is natural and digestible for the user, avoiding technical jargon and internal agent terms.
+
+The end user does not care about the internal workings of the system, so focus on the *insights* derived from the actions.
 
 Use the step-by-step history below to construct your summary.
 
 ---
 
-**The question and the actions taken for solving the question:**
+**The user's question, and the actions taken for solving the question:**
 
 {step_history}
 
@@ -407,9 +411,9 @@ Use the step-by-step history below to construct your summary.
 
 **Instructions:**
 - Write in the first person, as if you’re narrating the thought process to the user.
-- Focus on clarity and flow — imagine you're explaining what you've done so far to a curious, intelligent person with no access to system internals.
+- Focus on clarity and flow, imagine you're explaining what you've done so far to a curious, intelligent person with no access to system internals.
 - Don’t mention specific tool names, prompt templates, or internal terms like "pipeline" or "agent."
-- Instead, narrate the *actions* and *insights* derived.
+- Instead, narrate the most basic *actions* (such as "I've searched the web") and *insights* derived. Do not explain your steps in detail and try to not talk about them at all.
 - At the end of your output, include a list of URLs or documents referenced in a section titled `### Resources:` — list each link or reference on a new line.
 - If there are no external resources, say `None.` under the `### Resources:` section.
 - You can also add a TL;DR or bulleted recap to help the user quickly grasp the answer.
