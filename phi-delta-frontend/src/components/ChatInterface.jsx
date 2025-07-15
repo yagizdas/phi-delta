@@ -15,6 +15,7 @@ export default function ChatInterface() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const containerRef = useRef(null);
   const fileInputRef = useRef(null);
+  const currentThinkingStepsRef = useRef([]);
 
   useEffect(() => {
     if (containerRef.current) {
@@ -82,6 +83,7 @@ export default function ChatInterface() {
     setUploadedFiles([]); // Clear uploaded files after sending
     setIsThinking(true);
     setThinkingSteps([]);
+    currentThinkingStepsRef.current = []; // Reset the ref for new request
 
     try {
       // Start polling for thinking steps
@@ -99,6 +101,7 @@ export default function ChatInterface() {
           
           if (Array.isArray(steps) && steps.length > 0) {
             setThinkingSteps(steps);
+            currentThinkingStepsRef.current = steps; // Keep ref updated
           }
         } catch (error) {
           console.error('Error fetching thinking steps:', error);
@@ -124,7 +127,19 @@ export default function ChatInterface() {
               clearInterval(thinkingInterval);
               clearInterval(statusInterval);
               setIsThinking(false);
-              setMessages(prev => [...prev, { role: 'assistant', content: resultData.result }]);
+              
+              // Use the ref to get the most current thinking steps
+              const currentThinkingSteps = [...currentThinkingStepsRef.current];
+              
+              // Create assistant message with the current thinking steps
+              const assistantMsg = {
+                role: 'assistant',
+                content: resultData.result,
+                thinkingSteps: currentThinkingSteps.length > 0 ? currentThinkingSteps : null,
+                thinkingDuration: currentThinkingSteps.length > 0 ? `${currentThinkingSteps.length} steps` : null
+              };
+              
+              setMessages(prev => [...prev, assistantMsg]);
               return;
             }
           }
@@ -152,7 +167,17 @@ export default function ChatInterface() {
       
     } catch (error) {
       setIsThinking(false);
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, something went wrong.' }]);
+      
+      // Use the ref to get the most current thinking steps
+      const currentThinkingSteps = [...currentThinkingStepsRef.current];
+      
+      const errorMsg = {
+        role: 'assistant',
+        content: 'Sorry, something went wrong.',
+        thinkingSteps: currentThinkingSteps.length > 0 ? currentThinkingSteps : null,
+        thinkingDuration: currentThinkingSteps.length > 0 ? `${currentThinkingSteps.length} steps` : null
+      };
+      setMessages(prev => [...prev, errorMsg]);
       console.error('Chat error:', error);
     }
   };
@@ -289,8 +314,43 @@ export default function ChatInterface() {
                   : 'bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 text-slate-100 shadow-xl shadow-slate-900/30'
               }`}
             >
+
+              {/* Show thinking steps for assistant messages - moved to top */}
+              {msg.role === 'assistant' && msg.thinkingSteps && msg.thinkingSteps.length > 0 && (
+                <div className="mb-3 pb-3 border-b border-slate-600/50">
+                  <details className="group">
+                    <summary className="flex items-center cursor-pointer text-slate-400 hover:text-slate-300 transition-colors">
+                      <div className="flex items-center">
+                        <span className="text-sm font-medium">
+                          Thought for {msg.thinkingDuration}
+                        </span>
+                      </div>
+                      <svg className="w-4 h-4 ml-2 transform transition-transform group-open:rotate-180" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </summary>
+                    <div className="mt-3 space-y-2 pl-6 border-l-2 border-slate-600/30">
+                      {msg.thinkingSteps.map((step, stepIdx) => (
+                        <div key={stepIdx} className="flex items-start space-x-3">
+                          <div className="flex-shrink-0 mt-1">
+                            <div className="w-2 h-2 bg-blue-400 rounded-full ml-[2px] mt-[3px]"></div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-slate-300 text-sm leading-relaxed">
+                              <span className="text-blue-400 font-medium">Step {step.step}:</span>{' '}
+                              {step.description}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                </div>
+              )}
+
+              {/* Show phiDelta indicator for assistant messages - moved below thinking steps */}
               {msg.role === 'assistant' && (
-                <div className="flex items-center mb-3 text-teal-400 text-sm font-medium">
+                <div className="flex items-center mb-3 text-emerald-400 text-sm font-medium">
                   <div className="w-2 h-2 bg-emerald-400 rounded-full mr-2 animate-pulse"></div>
                   phiDelta
                 </div>
