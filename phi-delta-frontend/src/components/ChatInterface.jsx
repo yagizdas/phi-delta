@@ -305,96 +305,192 @@ export default function ChatInterface() {
         </header>
         
         <main ref={containerRef} className="flex-1 overflow-auto p-6 space-y-6">
-          {messages.map((msg, idx) => (
-            <div
-              key={idx}
-              className={`max-w-3xl mx-auto p-5 rounded-2xl whitespace-pre-line transition-all duration-200 ${
-                msg.role === 'user' 
-                  ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white ml-auto max-w-2xl shadow-lg shadow-emerald-900/20' 
-                  : 'bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 text-slate-100 shadow-xl shadow-slate-900/30'
-              }`}
-            >
-
-              {/* Show thinking steps for assistant messages - moved to top */}
-              {msg.role === 'assistant' && msg.thinkingSteps && msg.thinkingSteps.length > 0 && (
-                <div className="mb-3 pb-3 border-b border-slate-600/50">
-                  <details className="group">
-                    <summary className="flex items-center cursor-pointer text-slate-400 hover:text-slate-300 transition-colors">
-                      <div className="flex items-center">
-                        <span className="text-sm font-medium">
-                          Thought for {msg.thinkingDuration}
-                        </span>
+          {messages.length === 0 ? (
+            // Welcome/Start Page
+            <div className="flex flex-col items-center justify-center h-full min-h-[60vh] space-y-8">
+              <div className="text-center space-y-4 max-w-2xl">
+                <div className="space-y-2">
+                  <h2 className="text-4xl font-bold text-slate-100">
+                    What's on the agenda today?
+                  </h2>
+                  <p className="text-lg text-slate-400">
+                    I'm here to help you research, analyze, and explore any topic. Upload documents, ask questions, and let's dive deep into knowledge together.
+                  </p>
+                </div>
+                
+                {/* Example prompts */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+                  <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4 hover:bg-slate-800/60 transition-colors cursor-pointer group"
+                       onClick={() => setInput("Analyze the latest trends in artificial intelligence research")}>
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0 mt-1">
+                        <svg className="w-5 h-5 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                        </svg>
                       </div>
-                      <svg className="w-4 h-4 ml-2 transform transition-transform group-open:rotate-180" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                      </svg>
-                    </summary>
-                    <div className="mt-3 space-y-2 pl-6 border-l-2 border-slate-600/30">
-                      {msg.thinkingSteps.map((step, stepIdx) => (
-                        <div key={stepIdx} className="flex items-start space-x-3">
-                          <div className="flex-shrink-0 mt-1">
-                            <div className="w-2 h-2 bg-blue-400 rounded-full ml-[2px] mt-[3px]"></div>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-slate-300 text-sm leading-relaxed">
-                              <span className="text-blue-400 font-medium">Step {step.step}:</span>{' '}
-                              {step.description}
+                      <div>
+                        <h3 className="font-medium text-slate-200 group-hover:text-emerald-400 transition-colors">
+                          Research Analysis
+                        </h3>
+                        <p className="text-sm text-slate-400 mt-1">
+                          Analyze the latest trends in artificial intelligence research
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4 hover:bg-slate-800/60 transition-colors cursor-pointer group"
+                       onClick={() => setInput("Summarize and compare key findings from my uploaded documents")}>
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0 mt-1">
+                        <svg className="w-5 h-5 text-teal-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-slate-200 group-hover:text-teal-400 transition-colors">
+                          Document Analysis
+                        </h3>
+                        <p className="text-sm text-slate-400 mt-1">
+                          Summarize and compare key findings from my uploaded documents
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4 hover:bg-slate-800/60 transition-colors cursor-pointer group"
+                       onClick={() => setInput("Help me understand complex scientific concepts with clear explanations")}>
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0 mt-1">
+                        <svg className="w-5 h-5 text-cyan-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-slate-200 group-hover:text-cyan-400 transition-colors">
+                          Concept Explanation
+                        </h3>
+                        <p className="text-sm text-slate-400 mt-1">
+                          Help me understand complex scientific concepts with clear explanations
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4 hover:bg-slate-800/60 transition-colors cursor-pointer group"
+                       onClick={() => setInput("Create a comprehensive research plan for my project")}>
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0 mt-1">
+                        <svg className="w-5 h-5 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-slate-200 group-hover:text-purple-400 transition-colors">
+                          Research Planning
+                        </h3>
+                        <p className="text-sm text-slate-400 mt-1">
+                          Create a comprehensive research plan for my project
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            // Chat Messages
+            messages.map((msg, idx) => (
+              <div
+                key={idx}
+                className={`max-w-3xl mx-auto p-5 rounded-2xl whitespace-pre-line transition-all duration-200 ${
+                  msg.role === 'user' 
+                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white ml-auto max-w-2xl shadow-lg shadow-emerald-900/20' 
+                    : 'bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 text-slate-100 shadow-xl shadow-slate-900/30'
+                }`}
+              >
+
+                {/* Show thinking steps for assistant messages - moved to top */}
+                {msg.role === 'assistant' && msg.thinkingSteps && msg.thinkingSteps.length > 0 && (
+                  <div className="mb-3 pb-3 border-b border-slate-600/50">
+                    <details className="group">
+                      <summary className="flex items-center cursor-pointer text-slate-400 hover:text-slate-300 transition-colors">
+                        <div className="flex items-center">
+                          <span className="text-sm font-medium">
+                            Thought for {msg.thinkingDuration}
+                          </span>
+                        </div>
+                        <svg className="w-4 h-4 ml-2 transform transition-transform group-open:rotate-180" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                      </summary>
+                      <div className="mt-3 space-y-2 pl-6 border-l-2 border-slate-600/30">
+                        {msg.thinkingSteps.map((step, stepIdx) => (
+                          <div key={stepIdx} className="flex items-start space-x-3">
+                            <div className="flex-shrink-0 mt-1">
+                              <div className="w-2 h-2 bg-blue-400 rounded-full ml-[2px] mt-[3px]"></div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-slate-300 text-sm leading-relaxed">
+                                <span className="text-blue-400 font-medium">Step {step.step}:</span>{' '}
+                                {step.description}
+                              </div>
                             </div>
                           </div>
+                        ))}
+                      </div>
+                    </details>
+                  </div>
+                )}
+
+                {/* Show phiDelta indicator for assistant messages - moved below thinking steps */}
+                {msg.role === 'assistant' && (
+                  <div className="flex items-center mb-3 text-emerald-400 text-sm font-medium">
+                    <div className="w-2 h-2 bg-emerald-400 rounded-full mr-2 animate-pulse"></div>
+                    phiDelta
+                  </div>
+                )}
+                
+                {/* Show attached files for user messages */}
+                {msg.role === 'user' && msg.attachedFiles && msg.attachedFiles.length > 0 && (
+                  <div className="mb-3 pb-3 border-b border-white/20">
+                    <div className="flex items-center mb-2">
+                      <svg className="w-4 h-4 text-white/80 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-sm font-medium text-white/90">Files Attached:</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {msg.attachedFiles.map((file, fileIdx) => (
+                        <div key={fileIdx} className="flex items-center bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 text-sm">
+                          <svg className="w-4 h-4 text-white/80 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                          </svg>
+                          <span className="text-white/90 mr-2">{file.name}</span>
+                          {file.isModelFile && (
+                            <span className="text-xs bg-emerald-500/30 text-emerald-200 px-2 py-0.5 rounded-full">
+                              Document
+                            </span>
+                          )}
                         </div>
                       ))}
                     </div>
-                  </details>
-                </div>
-              )}
-
-              {/* Show phiDelta indicator for assistant messages - moved below thinking steps */}
-              {msg.role === 'assistant' && (
-                <div className="flex items-center mb-3 text-emerald-400 text-sm font-medium">
-                  <div className="w-2 h-2 bg-emerald-400 rounded-full mr-2 animate-pulse"></div>
-                  phiDelta
-                </div>
-              )}
-              
-              {/* Show attached files for user messages */}
-              {msg.role === 'user' && msg.attachedFiles && msg.attachedFiles.length > 0 && (
-                <div className="mb-3 pb-3 border-b border-white/20">
-                  <div className="flex items-center mb-2">
-                    <svg className="w-4 h-4 text-white/80 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                    </svg>
-                    <span className="text-sm font-medium text-white/90">Files Attached:</span>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {msg.attachedFiles.map((file, fileIdx) => (
-                      <div key={fileIdx} className="flex items-center bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 text-sm">
-                        <svg className="w-4 h-4 text-white/80 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
-                        </svg>
-                        <span className="text-white/90 mr-2">{file.name}</span>
-                        {file.isModelFile && (
-                          <span className="text-xs bg-emerald-500/30 text-emerald-200 px-2 py-0.5 rounded-full">
-                            Document
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                components={{
-                  div: ({node, ...props}) => <div className={`prose prose-sm max-w-none ${
-                    msg.role === 'user' ? 'prose-invert' : 'prose-slate prose-invert'
-                  }`} {...props} />
-                }}
-              >
-                {msg.content}
-              </ReactMarkdown>
-            </div>
-          ))}
+                )}
+                
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    div: ({node, ...props}) => <div className={`prose prose-sm max-w-none ${
+                      msg.role === 'user' ? 'prose-invert' : 'prose-slate prose-invert'
+                    }`} {...props} />
+                  }}
+                >
+                  {msg.content}
+                </ReactMarkdown>
+              </div>
+            ))
+          )}
           
           {/* Thinking Component - appears after all messages */}
           {isThinking && (
@@ -462,8 +558,8 @@ export default function ChatInterface() {
           )}
         </main>
         
-        <footer className="p-6 bg-slate-800/30 backdrop-blur-sm border-t border-slate-700/50">
-          <div className="max-w-4xl mx-auto">
+        <footer className={`p-6 bg-slate-800/30 backdrop-blur-sm border-t border-slate-700/50 ${messages.length === 0 ? 'flex items-center justify-center' : ''}`}>
+          <div className={`${messages.length === 0 ? 'w-full max-w-3xl' : 'max-w-4xl'} mx-auto`}>
             {/* File Upload List */}
             {uploadedFiles.length > 0 && (
               <div className="mb-4 p-3 bg-slate-700/30 rounded-xl border border-slate-600/30">
