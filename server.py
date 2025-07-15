@@ -7,8 +7,10 @@ import threading
 
 from pipelines import planner_behaviour, agentic_behaviour
 
+from SessionRAG import add_to_rag
+
 app = FastAPI()
-state = init_agent(debug=False)
+state = init_agent(debug=True)
 
 # Add state management for async processing
 processing_state = {
@@ -27,6 +29,8 @@ def run_agentic_task(state, question, rag = False, debug=False):
         memory = state["memory"]
         llm = state["llm"]
         agent = state["agent"]
+        vectorstore = state["vectorstore"]
+        session_path = state["session_path"]
         plan = planner_behaviour(llm=llm, question=question, memory=memory, rag=rag, debug=debug)
         result = agentic_behaviour(llm=llm, agent=agent, plan=plan, question=question, memory=memory, rag=rag, log=debug)
         
@@ -39,7 +43,10 @@ def run_agentic_task(state, question, rag = False, debug=False):
         # Update chat summary (like in main.py)
         from agents import run_summarizer
         memory.chat_summary = run_summarizer(reasoning_llm=llm, memory=memory)
-        
+
+        # adding if any files were downloaded
+        add_to_rag(vectorstore=vectorstore, session_path=session_path, debug=debug)
+
         print(f"Task fully completed. Processing state: {processing_state}")  # Debug log
         
     except Exception as e:

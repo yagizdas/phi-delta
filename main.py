@@ -57,7 +57,12 @@ def get_reply(state: dict, question: str, route: str, ctx: str, debug: bool = Fa
                                       retrieved_context=ctx, rag=True)
         rag_route = run_RAG_router(llm, query=question, response=resp,
                                    debug=debug).strip()
-        if rag_route == "ESCALATE":
+        
+        decision = parse_router(rag_route, debug=debug)
+
+        print(f"RAG Route: {decision}")  # Debug log
+        if decision == "ESCALATE":
+            print("Escalating to agentic task...")  # Debug log
             return True  # Indicates that the agentic task should be run
         else:
             answer = resp

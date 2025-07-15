@@ -3,7 +3,7 @@ from SessionRAG import similarity_search
 from config import MAIN_PATH
 import os
 
-def rag_search(vectorstore, query: str, file: str = None, debug:bool = False) -> list[Document]:
+def rag_search(vectorstore, query: str, file: str = None, debug:bool = True) -> list[Document]:
     """
     Perform a similarity search in the vector store and return the results.
 
@@ -26,9 +26,8 @@ def rag_search(vectorstore, query: str, file: str = None, debug:bool = False) ->
     
     if not results:
         return []
-
-    if debug: 
-        print(results)
+ 
+    print(results)
 
     return results
 
