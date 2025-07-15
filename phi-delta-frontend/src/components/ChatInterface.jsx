@@ -11,6 +11,9 @@ export default function ChatInterface() {
   const [isThinking, setIsThinking] = useState(false);
   const [isThinkingExpanded, setIsThinkingExpanded] = useState(true);
   const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [modelFiles, setModelFiles] = useState([]);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const containerRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -19,6 +22,41 @@ export default function ChatInterface() {
       containerRef.current.scrollTop = containerRef.current.scrollHeight;
     }
   }, [messages, isThinking, thinkingSteps]);
+
+  // Fetch model files on component mount and poll every 5 seconds
+  useEffect(() => {
+    const fetchModelFiles = async () => {
+      try {
+        console.log('🔍 Fetching model files from /api/get-model-files...');
+        const response = await fetch('/api/get-model-files');
+        console.log('📡 Response status:', response.status, response.statusText);
+        
+        if (response.ok) {
+          const files = await response.json();
+          console.log('📁 Received files:', files);
+          console.log('📁 Files type:', typeof files);
+          console.log('📁 Files array?', Array.isArray(files));
+          console.log('📁 Files length:', files?.length);
+          
+          setModelFiles(files);
+          console.log('✅ Model files updated in state');
+        } else {
+          console.error('❌ Failed to fetch model files:', response.status, response.statusText);
+        }
+      } catch (error) {
+        console.error('💥 Error fetching model files:', error);
+      }
+    };
+    
+    // Initial fetch
+    fetchModelFiles();
+    
+    // Set up polling every 5 seconds
+    const interval = setInterval(fetchModelFiles, 5000);
+    
+    // Cleanup interval on component unmount
+    return () => clearInterval(interval);
+  }, []);
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -56,10 +94,14 @@ export default function ChatInterface() {
           const statusRes = await fetch('/api/get-processing-status');
           const status = await statusRes.json();
           
+          console.log('Processing status:', status); // Debug log
+          
           if (!status.is_processing && status.has_result) {
             // Processing is complete, get the final result
             const resultRes = await fetch('/api/get-final-result');
             const resultData = await resultRes.json();
+            
+            console.log('Final result data:', resultData); // Debug log
             
             if (resultData.result) {
               clearInterval(thinkingInterval);
@@ -116,11 +158,134 @@ export default function ChatInterface() {
     setUploadedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
+  const toggleFileSelection = (fileName) => {
+    setSelectedFiles(prev => 
+      prev.includes(fileName) 
+        ? prev.filter(f => f !== fileName)
+        : [...prev, fileName]
+    );
+  };
+
+  const addFileToQuery = (fileName) => {
+    const fileReference = `[File: ${fileName}]`;
+    setInput(prev => prev + (prev ? ' ' : '') + fileReference);
+  };
+
+  const addSelectedFilesToQuery = () => {
+    if (selectedFiles.length > 0) {
+      const fileReferences = selectedFiles.map(f => `[File: ${f}]`).join(' ');
+      setInput(prev => prev + (prev ? ' ' : '') + fileReferences);
+    }
+  };
+
   return (
-  <div className="h-screen flex flex-col bg-slate-900">
-      <header className="bg-slate-850/50 backdrop-blur-sm border-b border-slate-700/50 p-6 flex flex-col items-center justify-center">
+    <div className="h-screen flex bg-slate-900">
+      {/* Sidebar */}
+      <div className={`${isSidebarOpen ? 'w-80' : 'w-0'} transition-all duration-300 bg-slate-800/50 backdrop-blur-sm border-r border-slate-700/50 overflow-hidden`}>
+        <div className="h-full flex flex-col">
+          {/* Sidebar Header */}
+          <div className="p-4 border-b border-slate-700/50">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-slate-200">Model Files</h2>
+              <button
+                onClick={() => setIsSidebarOpen(false)}
+                className="text-slate-400 hover:text-slate-200 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          {/* File List */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-2">
+            {(() => {
+              console.log('🎨 Rendering sidebar with modelFiles:', modelFiles);
+              console.log('🎨 modelFiles.length:', modelFiles.length);
+              return null;
+            })()}
+            
+            {modelFiles.length === 0 ? (
+              <div className="text-slate-400 text-sm text-center py-8">
+                No model files found
+                <div className="text-xs mt-2">
+                  {console.log('📄 Showing "No model files found" message')}
+                  Debug: modelFiles = {JSON.stringify(modelFiles)}
+                </div>
+              </div>
+            ) : (
+              modelFiles.map((file, index) => {
+                console.log(`📄 Rendering file ${index}:`, file);
+                return (
+                  <div
+                    key={index}
+                    className={`group relative p-3 rounded-lg border transition-all duration-200 cursor-pointer ${
+                      selectedFiles.includes(file)
+                        ? 'bg-emerald-600/20 border-emerald-500/50 text-emerald-300'
+                        : 'bg-slate-700/30 border-slate-600/50 text-slate-300 hover:bg-slate-700/50 hover:border-slate-500/50'
+                    }`}
+                    onClick={() => toggleFileSelection(file)}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="flex-shrink-0">
+                        <svg className="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{file}</p>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          addFileToQuery(file);
+                        }}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-emerald-400"
+                        title="Add to query"
+                      >
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+          
+          {/* Sidebar Footer */}
+          {selectedFiles.length > 0 && (
+            <div className="p-4 border-t border-slate-700/50">
+              <button
+                onClick={addSelectedFilesToQuery}
+                className="w-full bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/50 text-emerald-300 px-4 py-2 rounded-lg transition-colors text-sm font-medium"
+              >
+                Add {selectedFiles.length} selected to query
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col">
+        {/* Toggle Sidebar Button */}
+        {!isSidebarOpen && (
+          <button
+            onClick={() => setIsSidebarOpen(true)}
+            className="fixed top-4 left-4 z-10 bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 text-slate-300 hover:text-slate-100 p-2 rounded-lg transition-colors"
+          >
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+            </svg>
+          </button>
+        )}
+        
+        <header className="bg-slate-850/50 backdrop-blur-sm border-b border-slate-700/50 p-6 flex flex-col items-center justify-center">
         <h1 className="text-3xl font-bold text-slate-100 tracking-wide">
-          <span className="text-slate-300">Phi</span> <span className="bg-gradient-to-r from-emerald-400 to-cyan-500 bg-clip-text text-transparent">Delta</span>
+          <span className="text-slate-300">phi</span><span className="bg-gradient-to-r from-emerald-400 to-cyan-500 bg-clip-text text-transparent">Delta</span>
         </h1>
         <p className="text-sm text-slate-400 font-normal mt-1">Research Agent</p>
       </header>
@@ -137,7 +302,7 @@ export default function ChatInterface() {
             {msg.role === 'assistant' && (
               <div className="flex items-center mb-3 text-emerald-400 text-sm font-medium">
                 <div className="w-2 h-2 bg-emerald-400 rounded-full mr-2 animate-pulse"></div>
-                Research Agent
+                PhiDelta
               </div>
             )}
 	    <ReactMarkdown
@@ -290,6 +455,7 @@ export default function ChatInterface() {
           </div>
         </div>
       </footer>
+      </div>
     </div>
   );
 }

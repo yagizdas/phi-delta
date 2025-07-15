@@ -45,31 +45,20 @@ def route_query(state: dict, question: str, debug: bool = False):
 def get_reply(state: dict, question: str, route: str, ctx: str, debug: bool = False) -> str:
     memory        = state["memory"]
     llm           = state["llm"]
-    deterministic = state["deterministic"]
-    vectorstore   = state["vectorstore"]
     agent         = state["agent"]
-    session_path  = state["session_path"]
 
     if debug: print(f"\nQuestion: {question} | Routing: {route}\n")
 
     if route == "QuickResponse":
         answer = run_quickresponse(llm, question, context=memory)
-    elif route == "Agentic":
-        plan   = planner_behaviour(llm=llm, question=question, memory=memory)
-        answer = agentic_behaviour(llm=llm, agent=agent, plan=plan,
-                                   question=question, memory=memory, log=debug)
-        add_to_rag(vectorstore=vectorstore, session_path=session_path, debug=debug)
+
     else:  
         resp      = run_quickresponse(llm, question, context=memory,
                                       retrieved_context=ctx, rag=True)
         rag_route = run_RAG_router(llm, query=question, response=resp,
                                    debug=debug).strip()
         if rag_route == "ESCALATE":
-            plan   = planner_behaviour(llm=llm, question=question,
-                                       memory=memory, rag=True, debug=debug)
-            answer = agentic_behaviour(llm=llm, agent=agent, plan=plan,
-                                       question=question, memory=memory,
-                                       rag=True, log=debug)
+            return True  # Indicates that the agentic task should be run
         else:
             answer = resp
 
@@ -77,7 +66,7 @@ def get_reply(state: dict, question: str, route: str, ctx: str, debug: bool = Fa
     memory.chat_summary = run_summarizer(reasoning_llm=llm, memory=memory)
     return answer
 
-def run_agentic_task(state, question, debug=False):
+def run_agentic_task(state, question, rag = False, debug=False):
     global processing_state
     processing_state["is_processing"] = True
     processing_state["current_question"] = question
@@ -86,8 +75,8 @@ def run_agentic_task(state, question, debug=False):
         memory = state["memory"]
         llm = state["llm"]
         agent = state["agent"]
-        plan = planner_behaviour(llm=llm, question=question, memory=memory)
-        result = agentic_behaviour(llm=llm, agent=agent, plan=plan, question=question, memory=memory, log=debug)
+        plan = planner_behaviour(llm=llm, question=question, memory=memory, rag=rag, debug=debug)
+        result = agentic_behaviour(llm=llm, agent=agent, plan=plan, question=question, memory=memory, rag=rag, log=debug)
         
         # Store the final result
         processing_state["result"] = result

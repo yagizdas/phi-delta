@@ -22,7 +22,7 @@ A modern, agentic, local-first research assistant platform with LLM reasoning, d
   - `rag_search`: Retrieve relevant information from dynamic RAG
   - `wolfram_search`: WolframAlpha API integration for easy factual information retrieval.
   - `Python REPL`: Code Execution tool for Phi Delta.
-  - 
+  
 - **📚 Document Analysis:**  
   Parse downloaded PDFs, embed via HuggingFace (MiniLM-L6-v2), and search with Chroma.
 - **🧠 Memory & Context Awareness:**  

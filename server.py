@@ -17,17 +17,20 @@ processing_state = {
     "current_question": None
 }
 
-def run_agentic_task(state, question, debug=False):
+def run_agentic_task(state, question, rag = False, debug=False):
     global processing_state
     processing_state["is_processing"] = True
     processing_state["current_question"] = question
     
     try:
+        print(f"Starting agentic task for question: {question}")  # Debug log
         memory = state["memory"]
         llm = state["llm"]
         agent = state["agent"]
-        plan = planner_behaviour(llm=llm, question=question, memory=memory)
-        result = agentic_behaviour(llm=llm, agent=agent, plan=plan, question=question, memory=memory, log=debug)
+        plan = planner_behaviour(llm=llm, question=question, memory=memory, rag=rag, debug=debug)
+        result = agentic_behaviour(llm=llm, agent=agent, plan=plan, question=question, memory=memory, rag=rag, log=debug)
+        
+        print(f"Agentic task completed. Result: {result[:100]}...")  # Debug log
         
         # Store the final result
         processing_state["result"] = result
@@ -37,7 +40,10 @@ def run_agentic_task(state, question, debug=False):
         from agents import run_summarizer
         memory.chat_summary = run_summarizer(reasoning_llm=llm, memory=memory)
         
+        print(f"Task fully completed. Processing state: {processing_state}")  # Debug log
+        
     except Exception as e:
+        print(f"Error in agentic task: {str(e)}")  # Debug log
         processing_state["result"] = f"Error: {str(e)}"
         processing_state["is_processing"] = False
 
@@ -54,11 +60,13 @@ async def get_chat_history():
 
 @app.get("/get-processing-status")
 async def get_processing_status():
-    return {
+    status = {
         "is_processing": processing_state["is_processing"],
         "has_result": processing_state["result"] is not None,
         "current_question": processing_state["current_question"]
     }
+    print(f"Processing status: {status}")  # Debug log
+    return status
 
 @app.get("/get-final-result")
 async def get_final_result():
@@ -82,6 +90,16 @@ async def reset_chat_history():
     processing_state["current_question"] = None
     return {"status": "cleared"}
 
+@app.get("/get-model-files")
+async def get_model_files():
+    """
+    Retrieves a list of model files for the given session ID.
+    """
+    import os
+    from config import MAIN_PATH
+    model_files = [f for f in os.listdir(MAIN_PATH) if f.endswith('.pdf')]
+    return model_files
+
 @app.post("/chat", response_model=ChatResponse)
 async def chat(req: ChatRequest, background_tasks: BackgroundTasks):
     # Clear previous result
@@ -92,9 +110,18 @@ async def chat(req: ChatRequest, background_tasks: BackgroundTasks):
 
     if route == "Agentic":
         processing_state["is_processing"] = True
-        background_tasks.add_task(run_agentic_task, state, req.message, True)  # Enable debug
+        background_tasks.add_task(run_agentic_task, state, req.message, False, True)  # Enable debug
         return ChatResponse(reply="🔄 Processing your request... This may take a moment.")
     
     else:
+
         answer = get_reply(state, req.message, route, ctx, debug=False)
+
+        # Answer returns True if it indicates an agentic task should be run after RAG routing. This is handled in the main.py logic.
+        if answer == True:
+
+            print("RAG Agentic task triggered")
+            background_tasks.add_task(run_agentic_task, state, req.message, True, True)  # Enable debug, RAG
+            return ChatResponse(reply="🔄 Processing your request... This may take a moment.")
+        
         return ChatResponse(reply=answer)
