@@ -10,7 +10,9 @@ export default function ChatInterface() {
   const [thinkingSteps, setThinkingSteps] = useState([]);
   const [isThinking, setIsThinking] = useState(false);
   const [isThinkingExpanded, setIsThinkingExpanded] = useState(true);
+  const [uploadedFiles, setUploadedFiles] = useState([]);
   const containerRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (containerRef.current) {
@@ -103,13 +105,24 @@ export default function ChatInterface() {
     }
   };
 
+  const handleFileUpload = (event) => {
+    const files = Array.from(event.target.files);
+    setUploadedFiles(prev => [...prev, ...files]);
+    // Reset the input value so the same file can be selected again
+    event.target.value = '';
+  };
+
+  const removeFile = (index) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      <header className="bg-slate-800/50 backdrop-blur-sm border-b border-slate-700/50 p-6 flex items-center justify-center">
-        <h1 className="text-2xl font-bold text-slate-100 tracking-wide">
-          <span className="text-emerald-400">Phi</span> <span className="text-slate-300">Delta</span>
-          <span className="text-xs ml-2 text-slate-400 font-normal">Research Agent</span>
+  <div className="h-screen flex flex-col bg-slate-900">
+      <header className="bg-slate-850/50 backdrop-blur-sm border-b border-slate-700/50 p-6 flex flex-col items-center justify-center">
+        <h1 className="text-3xl font-bold text-slate-100 tracking-wide">
+          <span className="text-slate-300">Phi</span> <span className="bg-gradient-to-r from-emerald-400 to-cyan-500 bg-clip-text text-transparent">Delta</span>
         </h1>
+        <p className="text-sm text-slate-400 font-normal mt-1">Research Agent</p>
       </header>
       <main ref={containerRef} className="flex-1 overflow-auto p-6 space-y-6">
         {messages.map((msg, idx) => (
@@ -206,10 +219,56 @@ export default function ChatInterface() {
         )}
       </main>
       <footer className="p-6 bg-slate-800/30 backdrop-blur-sm border-t border-slate-700/50">
-        <div className="max-w-4xl mx-auto flex items-end space-x-4">
-          <div className="flex-1 relative">
+        <div className="max-w-4xl mx-auto">
+          {/* File Upload List */}
+          {uploadedFiles.length > 0 && (
+            <div className="mb-4 p-3 bg-slate-700/30 rounded-x1 border border-slate-600/30">
+              <div className="flex flex-wrap gap-2">
+                {uploadedFiles.map((file, index) => (
+                  <div key={index} className="flex items-center bg-slate-600/50 rounded-lg px-3 py-1 text-sm">
+                    <svg className="w-4 h-4 text-slate-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                    </svg>
+                    <span className="text-slate-300 mr-2">{file.name}</span>
+                    <button
+                      onClick={() => removeFile(index)}
+                      className="text-slate-400 hover:text-red-400 transition-colors cursor-pointer"
+                    >
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          <div className="flex items-center space-x-4">
+            {/* Document Upload Button */}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/50 hover:border-slate-500/50 text-slate-300 px-3 py-3 rounded-full transition-all duration-200 font-medium shadow-lg hover:shadow-slate-900/50 flex items-center space-x-2 cursor-pointer"
+              title="Upload documents"
+            >
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+              </svg>
+            </button>
+            
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept=".pdf,.doc,.docx,.txt,.md"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            
+            <div className="flex-1 relative">
             <textarea
-              className="w-full bg-slate-700/50 backdrop-blur-sm border border-slate-600/50 rounded-2xl p-4 text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 resize-none transition-all duration-200 shadow-lg"
+              className="w-full bg-slate-700/50 backdrop-blur-sm border border-slate-600/50 rounded-4xl p-4 text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 resize-none transition-all duration-200 shadow-lg"
               placeholder="Ask your research question..."
               value={input}
               onChange={e => setInput(e.target.value)}
@@ -219,15 +278,16 @@ export default function ChatInterface() {
           </div>
           <button
             onClick={handleSend}
-            className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-6 py-3 rounded-2xl transition-all duration-200 font-medium shadow-lg shadow-emerald-900/30 hover:shadow-emerald-900/50 hover:scale-105 active:scale-95"
+            className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-6 py-3 rounded-2xl transition-all duration-200 font-medium shadow-lg shadow-emerald-900/30 hover:shadow-emerald-900/50 hover:scale-105 active:scale-95 cursor-pointer"
           >
             <span className="flex items-center">
               Send
-              <svg className="ml-2 w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="ml-2 w-4 h-10" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path>
               </svg>
             </span>
           </button>
+          </div>
         </div>
       </footer>
     </div>
