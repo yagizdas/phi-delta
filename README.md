@@ -6,7 +6,7 @@ A modern, agentic, local-first research assistant platform with LLM reasoning, d
 
 ## 🚀 Overview
 
-**phi-delta** is an advanced, locally running AI agentic assistant. It leverages cutting-edge LLMs (by default, Phi-4-IQ4_XS) for reasoning, planning, and tool use. The system integrates custom tools for code execution, PDF/ArXiv document search and retrieval, multimodal (image) analysis, and vector-embedded document search. The platform features a robust backend in Python, and a sleek, responsive frontend built with Next.js.
+**phi-delta** is an advanced, locally running AI agentic assistant. It leverages cutting-edge LLMs (by default, Phi-4-IQ4_K_S) for reasoning, planning, and tool use. The system integrates custom tools for code execution, PDF/ArXiv document search and retrieval, multimodal (image) analysis, and vector-embedded document search. The platform features a robust backend in Python, and a sleek, responsive frontend built with Next.js.
 
 **Key Features:**
 - **💬 Local LLM Reasoning:**  
