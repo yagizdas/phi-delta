@@ -3,16 +3,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 
 export default function ChatInterface() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [thinkingSteps, setThinkingSteps] = useState([]);
   const [isThinking, setIsThinking] = useState(false);
-  const [isThinkingExpanded, setIsThinkingExpanded] = useState(true);
+  const [isThinkingExpanded, setIsThinkingExpanded] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [modelFiles, setModelFiles] = useState([]);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const containerRef = useRef(null);
   const fileInputRef = useRef(null);
   const currentThinkingStepsRef = useRef([]);
@@ -189,9 +192,75 @@ export default function ChatInterface() {
     }
   };
 
-  const handleFileUpload = (event) => {
+  const handleFileUpload = async (event) => {
     const files = Array.from(event.target.files);
-    setUploadedFiles(prev => [...prev, ...files]);
+    
+    for (const file of files) {
+      try {
+        console.log(`📤 Uploading file: ${file.name}`);
+        
+        // Create form data for the upload
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        // Add file to list with uploading status
+        setUploadedFiles(prev => [...prev, {
+          name: file.name,
+          type: file.type,
+          uploading: true
+        }]);
+        
+        // Upload to server
+        const response = await fetch('/api/upload-file', {
+          method: 'POST',
+          body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.status === 'success') {
+          console.log(`✅ File uploaded successfully: ${result.file_path}`);
+          
+          // Update file status to uploaded
+          setUploadedFiles(prev => prev.map(f => 
+            f.name === file.name && f.uploading ? {
+              ...f,
+              uploaded: true,
+              uploading: false,
+              serverPath: result.file_path,
+              serverFilename: result.filename
+            } : f
+          ));
+        } else {
+          console.error(`❌ Failed to upload ${file.name}:`, result.message);
+          
+          // Update file status to error
+          setUploadedFiles(prev => prev.map(f => 
+            f.name === file.name && f.uploading ? {
+              ...f,
+              uploaded: false,
+              uploading: false,
+              error: true,
+              errorMessage: result.message
+            } : f
+          ));
+        }
+      } catch (error) {
+        console.error(`💥 Error uploading ${file.name}:`, error);
+        
+        // Update file status to error
+        setUploadedFiles(prev => prev.map(f => 
+          f.name === file.name && f.uploading ? {
+            ...f,
+            uploaded: false,
+            uploading: false,
+            error: true,
+            errorMessage: error.message
+          } : f
+        ));
+      }
+    }
+    
     // Reset the input value so the same file can be selected again
     event.target.value = '';
   };
@@ -289,31 +358,62 @@ export default function ChatInterface() {
         {!isSidebarOpen && (
           <button
             onClick={() => setIsSidebarOpen(true)}
-            className="fixed top-4 left-4 z-10 bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 text-slate-300 hover:text-slate-100 p-2 rounded-lg transition-colors"
+            className="fixed top-2 left-4 z-30 bg-slate-800/80 backdrop-blur-sm border border-slate-700/50 text-slate-300 hover:text-slate-100 hover:bg-slate-700/80 hover:scale-105 p-3 rounded-lg transition-all duration-200 shadow-lg cursor-pointer group"
           >
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
-            </svg>
+            {/* Glyph-only logo for sidebar toggle */}
+            <img
+              src="/squarelogophidelta.png"
+              alt="phiDelta"
+              className="w-6 h-6 object-contain transition-transform duration-200 group-hover:rotate-12"
+            />
           </button>
         )}
         
-        <header className="bg-slate-850/50 backdrop-blur-sm border-b border-slate-700/50 p-6 flex flex-col items-center justify-center">
-          <h1 className="text-3xl font-bold text-slate-100 tracking-wide">
-            <span className="text-slate-300">phi</span><span className="bg-gradient-to-r from-emerald-400 to-cyan-500 bg-clip-text text-transparent">Delta</span>
-          </h1>
-          <p className="text-sm text-slate-400 font-normal mt-1">Research Agent</p>
+        {/* Horizontal nav lock-up - sticky app bar */}
+        <header className="sticky top-0 z-20 bg-slate-900/80 backdrop-blur-md border-b border-slate-700/50">
+          <div className="max-w-6xl mx-auto px-6 py-4">
+            <div className="flex items-center justify-center">
+              {/* Centered logo */}
+              <div className="flex items-center gap-1 hover:scale-105 transition-transform duration-200">
+                {/* Word-mark - responsive */}
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-100 cursor-pointer">
+                  <span className="text-slate-300">phi</span>
+                  <span className="bg-gradient-to-r from-emerald-400 to-cyan-500 bg-clip-text text-transparent">
+                    Delta
+                  </span>
+                </h1>
+              </div>
+            </div>
+          </div>
         </header>
         
-        <main ref={containerRef} className="flex-1 overflow-auto p-6 space-y-6">
+        <main ref={containerRef} className="flex-1 overflow-auto p-6 space-y-8">
           {messages.length === 0 ? (
-            // Welcome/Start Page
-            <div className="flex flex-col items-center justify-center h-full min-h-[60vh] space-y-8">
-              <div className="text-center space-y-4 max-w-2xl">
-                <div className="space-y-2">
-                  <h2 className="text-4xl font-bold text-slate-100">
+            // Welcome/Start Page - Full lock-up for hero
+            <div className="flex flex-col items-center justify-center min-h-[60vh]">
+              {/* Full lock-up - hero placement */}
+              <div className="flex flex-col items-center space-y-6">
+                <div className="flex items-center space-x-3">
+                  {/* Hero glyph */}
+                  <img
+                    src="/logophidelta.png"
+                    alt="phiDelta"
+                    className="w-56 h-5 md:w-64 md:h-64 object-contain select-none pointer-events-none"
+                  />
+                  {/* Hero word-mark */}
+
+                </div>
+                {/* Subtitle with proper spacing */}
+
+              </div>
+              
+              {/* Main content with proper clear-space */}
+              <div className="text-center space-y-6 max-w-2xl">
+                <div className="space-y-4">
+                  <h2 className="text-3xl md:text-4xl font-bold text-slate-100">
                     What's on the agenda today?
                   </h2>
-                  <p className="text-lg text-slate-400">
+                  <p className="text-lg text-slate-400 leading-relaxed">
                     I'm here to help you research, analyze, and explore any topic. Upload documents, ask questions, and let's dive deep into knowledge together.
                   </p>
                 </div>
@@ -403,7 +503,7 @@ export default function ChatInterface() {
             messages.map((msg, idx) => (
               <div
                 key={idx}
-                className={`max-w-3xl mx-auto p-5 rounded-2xl whitespace-pre-line transition-all duration-200 ${
+                className={`max-w-3xl mx-auto p-5 rounded-2xl transition-all duration-200 break-words overflow-wrap-anywhere ${
                   msg.role === 'user' 
                     ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white ml-auto max-w-2xl shadow-lg shadow-emerald-900/20' 
                     : 'bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 text-slate-100 shadow-xl shadow-slate-900/30'
@@ -446,7 +546,12 @@ export default function ChatInterface() {
                 {/* Show phiDelta indicator for assistant messages - moved below thinking steps */}
                 {msg.role === 'assistant' && (
                   <div className="flex items-center mb-3 text-emerald-400 text-sm font-medium">
-                    <div className="w-2 h-2 bg-emerald-400 rounded-full mr-2 animate-pulse"></div>
+                    <div className="animate-pulse">
+                    <img
+                      src="/squaregreenlogophidelta.png"
+                      alt="phiDelta"
+                      className="w-4 h-4 object-contain mr-1 opacity-80"
+                    /></div>
                     phiDelta
                   </div>
                 )}
@@ -462,11 +567,13 @@ export default function ChatInterface() {
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {msg.attachedFiles.map((file, fileIdx) => (
-                        <div key={fileIdx} className="flex items-center bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 text-sm">
+                        <div key={fileIdx} className="flex items-center bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 text-sm" title={file.name}>
                           <svg className="w-4 h-4 text-white/80 mr-2" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
                           </svg>
-                          <span className="text-white/90 mr-2">{file.name}</span>
+                          <span className="text-white/90 mr-2">
+                            {file.name.length > 30 ? `${file.name.slice(0, 30)}...` : file.name}
+                          </span>
                           {file.isModelFile && (
                             <span className="text-xs bg-emerald-500/30 text-emerald-200 px-2 py-0.5 rounded-full">
                               Document
@@ -479,11 +586,19 @@ export default function ChatInterface() {
                 )}
                 
                 <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
+                  remarkPlugins={[remarkGfm, remarkMath]}
+                  rehypePlugins={[rehypeKatex]}
                   components={{
-                    div: ({node, ...props}) => <div className={`prose prose-sm max-w-none ${
+                    div: ({node, ...props}) => <div className={`prose prose-sm max-w-none break-words leading-loose ${
                       msg.role === 'user' ? 'prose-invert' : 'prose-slate prose-invert'
-                    }`} {...props} />
+                    }`} {...props} />,
+                    p: ({node, ...props}) => <p className="whitespace-pre-line break-words leading-loose mb-6" {...props} />,
+                    // Handle long URLs and filenames in text
+                    text: ({node, ...props}) => <span className="break-all leading-loose" {...props} />,
+                    // Add spacing to lists
+                    ul: ({node, ...props}) => <ul className="space-y-2 my-4" {...props} />,
+                    ol: ({node, ...props}) => <ol className="space-y-2 my-4" {...props} />,
+                    li: ({node, ...props}) => <li className="leading-loose" {...props} />
                   }}
                 >
                   {msg.content}
@@ -501,10 +616,14 @@ export default function ChatInterface() {
                   className="flex items-center justify-between p-4 cursor-pointer hover:bg-slate-700/30 transition-colors"
                   onClick={() => setIsThinkingExpanded(!isThinkingExpanded)}
                 >
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-1">
                     <div className="relative">
-                      <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse"></div>
-                      <div className="absolute inset-0 w-3 h-3 bg-emerald-400 rounded-full animate-ping opacity-30"></div>
+                      {/* Rotating glyph as thinking indicator */}
+                      <img
+                        src="/squaregreenlogophidelta.png"
+                        alt="Thinking"
+                        className="w-4 h-4 object-contain animate-bounce"
+                      />
                     </div>
                     <span className="text-emerald-400 font-medium">Thinking...</span>
                     {thinkingSteps.length > 0 && (
@@ -558,23 +677,43 @@ export default function ChatInterface() {
           )}
         </main>
         
-        <footer className={`p-6 bg-slate-800/30 backdrop-blur-sm border-t border-slate-700/50 ${messages.length === 0 ? 'flex items-center justify-center' : ''}`}>
-          <div className={`${messages.length === 0 ? 'w-full max-w-3xl' : 'max-w-4xl'} mx-auto`}>
+        <footer className={`p-6 backdrop-blur-sm  border-slate-700/50 ${messages.length === 0 ? 'flex items-left justify-center' : ''}`}>
+          <div className={`${messages.length === 0 ? 'w-full max-w-2xl' : 'max-w-2xl'} mx-auto`}>
             {/* File Upload List */}
             {uploadedFiles.length > 0 && (
               <div className="mb-4 p-3 bg-slate-700/30 rounded-xl border border-slate-600/30">
                 <div className="flex flex-wrap gap-2">
                   {uploadedFiles.map((file, index) => (
-                    <div key={index} className="flex items-center bg-slate-600/50 rounded-lg px-3 py-1 text-sm">
+                    <div key={index} className="flex items-center bg-slate-600/50 rounded-lg px-3 py-1 text-sm" title={file.name}>
                       <svg className="w-4 h-4 text-slate-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
                       </svg>
-                      <span className="text-slate-300 mr-2">{file.name}</span>
+                      <span className="text-slate-300 mr-2">
+                        {file.name.length > 25 ? `${file.name.slice(0, 25)}...` : file.name}
+                      </span>
+                      
+                      {/* Upload status indicators */}
+                      {file.uploading && (
+                        <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full mr-2">
+                          ⏳ Uploading...
+                        </span>
+                      )}
+                      {file.uploaded === true && (
+                        <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full mr-2">
+                          ✓ Uploaded
+                        </span>
+                      )}
+                      {file.uploaded === false && file.error && (
+                        <span className="text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full mr-2" title={file.errorMessage}>
+                          ✗ Failed
+                        </span>
+                      )}
                       {file.isModelFile && (
                         <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full mr-2">
                           Document
                         </span>
                       )}
+                      
                       <button
                         onClick={() => removeFile(index)}
                         className="text-slate-400 hover:text-red-400 transition-colors cursor-pointer"
@@ -636,6 +775,25 @@ export default function ChatInterface() {
             </div>
           </div>
         </footer>
+        
+        {/* Fixed Microsoft logo in bottom right corner */}
+        <div className="fixed bottom-6 right-6 z-40">
+          <div className="relative group">
+            <div className="bg-slate-800/80 backdrop-blur-sm border border-slate-700/50 rounded-xl p-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+              <img
+                src="/microsoftlogo.png"
+                alt="Microsoft"
+                className="w-8 h-8 object-contain opacity-80 hover:opacity-100 transition-opacity duration-300"
+              />
+            </div>
+            {/* Tooltip - positioned to show above the logo */}
+            <div className="absolute bottom-full right-0 mb-2 bg-slate-800/90 backdrop-blur-sm border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-slate-200 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap">
+              Microsoft AI Innovators Internship Project
+              <div className="text-xs text-slate-400 mt-1">Kemal Yagiz Daskiran</div>
+
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

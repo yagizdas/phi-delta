@@ -6,6 +6,7 @@ import ast
 import re 
 
 def bound_download_tool(input_indices_str, links):
+    print(f"Download tool invoked, Input indices string: {input_indices_str}")
     input_indices = ast.literal_eval(input_indices_str)  # Converts "[1, 2]" -> [1, 2]
     return download_arxiv_pdfs(input_indices, links)
 

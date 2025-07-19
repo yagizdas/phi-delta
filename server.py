@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File
 from pydantic import BaseModel
 from main import init_agent, get_reply, route_query
 from fastapi import BackgroundTasks
@@ -107,6 +107,48 @@ async def get_model_files():
     model_files = [f for f in os.listdir(MAIN_PATH) if f.endswith('.pdf')]
     return model_files
 
+@app.post("/upload-file")
+async def upload_file(file: UploadFile = File(...)):
+    """
+    Endpoint to upload a file to the server.
+    """
+    from pathlib import Path
+    from config import MAIN_PATH
+
+    vectorstore = state["vectorstore"]
+    session_path = state["session_path"]
+
+    # Ensure MAIN_PATH is a Path object
+    save_path = Path(MAIN_PATH) / file.filename
+    base = save_path.stem
+    ext = save_path.suffix
+    counter = 2
+
+    # Check for existing file and increment suffix
+    while save_path.exists():
+        save_path = Path(MAIN_PATH) / f"{base}_{counter}{ext}"
+        counter += 1
+
+    try:
+        # Read file content
+        file_content = await file.read()
+        
+        # Write file to disk
+        with open(save_path, "wb") as f:
+            f.write(file_content)
+
+        print(f"File uploaded successfully: {save_path}")
+
+        # Add to RAG system
+        add_to_rag(vectorstore=vectorstore, session_path=session_path, debug=False)
+
+        print("File added to RAG system")
+        
+        return {"status": "success", "file_path": str(save_path), "filename": save_path.name}
+    except Exception as e:
+        print(f"Error uploading file: {e}")
+        return {"status": "error", "message": str(e)}
+
 @app.post("/chat", response_model=ChatResponse)
 async def chat(req: ChatRequest, background_tasks: BackgroundTasks):
     # Clear previous result
@@ -118,6 +160,9 @@ async def chat(req: ChatRequest, background_tasks: BackgroundTasks):
     if route == "Agentic":
         processing_state["is_processing"] = True
         background_tasks.add_task(run_agentic_task, state, req.message, False, True)  # Enable debug
+
+        print(state["memory"].chat_history)
+        
         return ChatResponse(reply="🔄 Processing your request... This may take a moment.")
     
     else:
@@ -129,6 +174,9 @@ async def chat(req: ChatRequest, background_tasks: BackgroundTasks):
 
             print("RAG Agentic task triggered")
             background_tasks.add_task(run_agentic_task, state, req.message, True, True)  # Enable debug, RAG
+
+            print(state["memory"].chat_history)
+
             return ChatResponse(reply="🔄 Processing your request... This may take a moment.")
         
         return ChatResponse(reply=answer)

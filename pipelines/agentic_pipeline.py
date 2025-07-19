@@ -19,7 +19,8 @@ def agentic_behaviour(llm: ChatOpenAI,
     ## Clearing the step history
     memory.step_history.clear()
 
-    memory.step_history.append({"question":question})
+
+    if not rag: memory.step_history.append({"question":question})
 
     while i < len(plan):
 

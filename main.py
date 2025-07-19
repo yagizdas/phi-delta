@@ -12,7 +12,7 @@ from utils import create_session_id, create_session_directory
 from agents import run_rewriter, run_summarizer
 
 def init_agent(debug: bool = False) -> dict:
-    memory          = AgentMemory()
+    memory          = AgentMemory(max_history_length=30)
     llm             = instance_llm()
     deterministic   = instance_llm(temperature=0.0)
     vectorstore, _  = init_rag()
@@ -45,9 +45,10 @@ def route_query(state: dict, question: str, debug: bool = False):
 def get_reply(state: dict, question: str, route: str, ctx: str, debug: bool = False) -> str:
     memory        = state["memory"]
     llm           = state["llm"]
-    agent         = state["agent"]
 
     if debug: print(f"\nQuestion: {question} | Routing: {route}\n")
+
+    memory.add("user", question)
 
     if route == "QuickResponse":
         answer = run_quickresponse(llm, question, context=memory)
@@ -66,8 +67,11 @@ def get_reply(state: dict, question: str, route: str, ctx: str, debug: bool = Fa
             return True  # Indicates that the agentic task should be run
         else:
             answer = resp
+                        
 
     # update summary
+    memory.add("assistant", answer)
+
     memory.chat_summary = run_summarizer(reasoning_llm=llm, memory=memory)
     return answer
 
@@ -82,7 +86,7 @@ def run_agentic_task(state, question, rag = False, debug=False):
         agent = state["agent"]
         plan = planner_behaviour(llm=llm, question=question, memory=memory, rag=rag, debug=debug)
         result = agentic_behaviour(llm=llm, agent=agent, plan=plan, question=question, memory=memory, rag=rag, log=debug)
-        
+
         # Store the final result
         processing_state["result"] = result
         processing_state["is_processing"] = False
