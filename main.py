@@ -11,7 +11,7 @@ from pipelines import agentic_behaviour, planner_behaviour
 from utils import create_session_id, create_session_directory
 from agents import run_rewriter, run_summarizer
 
-def init_agent(vectorstore: None, debug: bool = False) -> dict:
+def init_agent(vectorstore= None, debug: bool = False) -> dict:
     """
     Initializes the agent with necessary components.
     Args:
