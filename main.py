@@ -4,23 +4,37 @@ from memory.memory import AgentMemory
 from agents import instance_agent, instance_llm
 from SessionRAG import init_rag
 from tools import initialize_tools
-from SessionRAG import add_to_rag, similarity_search
+from SessionRAG import add_to_rag, similarity_search, reset_rag
 from parsers import parse_router
 from agents import run_router, run_quickresponse, run_RAG_router
 from pipelines import agentic_behaviour, planner_behaviour
 from utils import create_session_id, create_session_directory
 from agents import run_rewriter, run_summarizer
 
-def init_agent(debug: bool = False) -> dict:
+def init_agent(vectorstore: None, debug: bool = False) -> dict:
+    """
+    Initializes the agent with necessary components.
+    Args:
+        vectorstore (None): Optional vectorstore for RAG. It will be initialized if not provided
+        debug (bool): Flag to enable debug mode.
+    Returns:
+        dict: A dictionary containing initialized components.
+    """
     memory          = AgentMemory(max_history_length=30)
     llm             = instance_llm()
     deterministic   = instance_llm(temperature=0.0)
-    vectorstore, _  = init_rag()
+
+    if vectorstore is None:
+        vectorstore, _ = init_rag()
+    else:
+        reset_rag(vectorstore=vectorstore, debug=debug)
+
     tools           = initialize_tools(llm=llm, memory=memory, vectorstore=vectorstore, debug=debug)
     agent           = instance_agent(llm=llm, tools=tools)
     session_id      = create_session_id()
     session_path    = create_session_directory(session_id=session_id)
     add_to_rag(vectorstore=vectorstore, session_path=session_path, debug=debug)
+
     return {
       "memory": memory,
       "llm": llm,
@@ -29,6 +43,7 @@ def init_agent(debug: bool = False) -> dict:
       "agent": agent,
       "session_path": session_path,
     }
+
 
 def route_query(state: dict, question: str, debug: bool = False):
     memory        = state["memory"]

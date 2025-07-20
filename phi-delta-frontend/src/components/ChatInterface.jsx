@@ -284,6 +284,17 @@ export default function ChatInterface() {
     }
   };
 
+  const newChat = () => {
+    setMessages([]);
+    setInput('');
+    setUploadedFiles([]);
+    setIsThinking(false);
+    setThinkingSteps([]);
+    currentThinkingStepsRef.current = [];
+    setIsSidebarOpen(false);
+    console.log('🗑️ New chat started, state reset');
+  }
+
   return (
     <div className="h-screen flex bg-slate-900">
       {/* Sidebar */}
@@ -368,7 +379,23 @@ export default function ChatInterface() {
             />
           </button>
         )}
-        
+
+        {/* New Chat Button - Enhanced */}
+        <button
+          onClick={() => newChat()}
+          className="fixed top-2 right-4 z-30 bg-gradient-to-r from-emerald-600/90 to-teal-600/90 hover:from-emerald-500 hover:to-teal-500 backdrop-blur-sm border border-emerald-500/30 text-white hover:text-white hover:scale-105 px-4 py-3 rounded-xl transition-all duration-300 shadow-lg shadow-emerald-900/20 hover:shadow-emerald-900/40 cursor-pointer group flex items-center space-x-2"
+        >
+          {/* Plus icon */}
+          <svg 
+            className="w-4 h-4 transition-transform duration-300 group-hover:rotate-90" 
+            fill="currentColor" 
+            viewBox="0 0 20 20"
+          >
+            <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+          </svg>
+          <span className="font-medium text-sm">New Chat</span>
+        </button>
+
         {/* Horizontal nav lock-up - sticky app bar */}
         <header className="sticky top-0 z-20 bg-slate-900/80 backdrop-blur-md border-b border-slate-700/50">
           <div className="max-w-6xl mx-auto px-6 py-4">
@@ -386,7 +413,9 @@ export default function ChatInterface() {
             </div>
           </div>
         </header>
+
         
+        {/* Main Chat Area */}
         <main ref={containerRef} className="flex-1 overflow-auto p-6 space-y-8">
           {messages.length === 0 ? (
             // Welcome/Start Page - Full lock-up for hero

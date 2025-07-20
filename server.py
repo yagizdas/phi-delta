@@ -54,6 +54,8 @@ def run_agentic_task(state, question, rag = False, debug=False):
         processing_state["result"] = f"Error: {str(e)}"
         processing_state["is_processing"] = False
 
+
+
 class ChatRequest(BaseModel):
     message: str
 
@@ -148,6 +150,33 @@ async def upload_file(file: UploadFile = File(...)):
     except Exception as e:
         print(f"Error uploading file: {e}")
         return {"status": "error", "message": str(e)}
+
+@app.post("/new-chat", response_model=ChatResponse)
+async def new_chat():
+    """
+    Endpoint to start a new chat session.
+    """
+    try:
+        vectorstore = state["vectorstore"]
+
+        state = init_agent(vectorstore=vectorstore, debug=True)
+
+        # Add state management for async processing
+        processing_state = {
+            "is_processing": False,
+            "result": None,
+            "current_question": None
+        }
+
+        print("New chat session initialized successfully.")
+
+        return "New chat session started successfully."
+    
+    except Exception as e:
+        print(f"Error initializing new chat: {e}")
+        return f"Error: {str(e)}"
+
+
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(req: ChatRequest, background_tasks: BackgroundTasks):
