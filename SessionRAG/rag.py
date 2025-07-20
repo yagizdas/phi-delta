@@ -142,6 +142,16 @@ def similarity_search(vectorstore,
     except Exception as e:
         return f"❌ Error during similarity search: {e}"
 
+def reset_rag(vectorstore) -> None:
+    """
+    Resets the RAG system by clearing the vector store.
+    """
+    try:
+        vectorstore.delete_collection()
+        print("RAG system reset successfully.")
+    except Exception as e:
+        print(f"❌ Error while resetting RAG system: {e}")
+        raise e
 
 if __name__ == "__main__":
     # For testing purposes only, will be removed soon.
