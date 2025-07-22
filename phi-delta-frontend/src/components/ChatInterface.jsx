@@ -61,6 +61,29 @@ export default function ChatInterface() {
     return () => clearInterval(interval);
   }, []);
 
+
+    const handleNewChat = async () => {
+    const newChat = await fetch('/api/new-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!newChat.ok) {
+        console.error('Failed to start new chat:', newChat.statusText);
+        return;
+    }
+    setMessages([]);
+    setInput('');
+    setUploadedFiles([]);
+    setIsThinking(false);
+    setThinkingSteps([]);
+    currentThinkingStepsRef.current = [];
+    setIsSidebarOpen(false);
+
+    const chatData = await newChat.json();
+    console.log('🆕 New chat started:', chatData);
+
+  }
+
   const handleSend = async () => {
     if (!input.trim()) return;
     
@@ -80,7 +103,7 @@ export default function ChatInterface() {
       content: input, 
       attachedFiles: uploadedFiles.length > 0 ? [...uploadedFiles] : null 
     };
-    
+  
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setUploadedFiles([]); // Clear uploaded files after sending
@@ -284,16 +307,6 @@ export default function ChatInterface() {
     }
   };
 
-  const newChat = () => {
-    setMessages([]);
-    setInput('');
-    setUploadedFiles([]);
-    setIsThinking(false);
-    setThinkingSteps([]);
-    currentThinkingStepsRef.current = [];
-    setIsSidebarOpen(false);
-    console.log('🗑️ New chat started, state reset');
-  }
 
   return (
     <div className="h-screen flex bg-slate-900">
@@ -382,7 +395,7 @@ export default function ChatInterface() {
 
         {/* New Chat Button - Enhanced */}
         <button
-          onClick={() => newChat()}
+          onClick={() => handleNewChat()}
           className="fixed top-2 right-4 z-30 bg-gradient-to-r from-emerald-600/90 to-teal-600/90 hover:from-emerald-500 hover:to-teal-500 backdrop-blur-sm border border-emerald-500/30 text-white hover:text-white hover:scale-105 px-4 py-3 rounded-xl transition-all duration-300 shadow-lg shadow-emerald-900/20 hover:shadow-emerald-900/40 cursor-pointer group flex items-center space-x-2"
         >
           {/* Plus icon */}

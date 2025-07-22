@@ -18,10 +18,15 @@ from utils import create_session_id, create_session_directory
 
 ADDED_FILES = "added_files.txt"
 
-def init_rag() -> tuple:
+def init_rag(embedding = None, session_id = None) -> tuple:
 
-    embeddings = setup_embedder()
+    if embedding is None:
+        print("Initializing the embedder...")
+        embeddings = setup_embedder()
+    else:
+        embeddings = embedding
 
+    """
     # Get embedding dimension from dummy query
     dim = len(embeddings.embed_query("dummy"))
 
@@ -32,7 +37,7 @@ def init_rag() -> tuple:
     docstore = InMemoryDocstore({})
     index_to_docstore_id = {}
 
-    """
+   
     # Create empty FAISS vector store
     faiss_vectorstore = FAISS(
         embedding_function=embeddings,
@@ -41,17 +46,16 @@ def init_rag() -> tuple:
         index_to_docstore_id=index_to_docstore_id,
     )
     """
-    
+    persist_directory = f"./chroma_data/{session_id}"
+
     # Chroma vectorstore alternative
     chroma_vectorstore = Chroma(
-    collection_name="phi-delta_RAG",
-    embedding_function=embeddings,
+        collection_name=f"chat_{session_id}",
+        embedding_function=embeddings,
+        persist_directory=persist_directory  # Directory to store the collection
     )
     
     vectorstore = chroma_vectorstore
-
-    # Create session directory
-
 
     return vectorstore, embeddings
 
@@ -63,11 +67,11 @@ def add_to_rag(vectorstore,
     """
     Adds new documents to the existing FAISS vector store.
     """
-    files = os.listdir(pdfs_path)
+    files = os.listdir(session_path)
 
     if not files:
-        raise FileNotFoundError("No PDF files found in the specified directory.")
-    
+        print("No PDF files found in the specified directory, Skipping...")
+        return
     try:
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
 
@@ -147,11 +151,15 @@ def reset_rag(vectorstore) -> None:
     Resets the RAG system by clearing the vector store.
     """
     try:
+        # Delete the collection if it exists
         vectorstore.delete_collection()
         print("RAG system reset successfully.")
     except Exception as e:
-        print(f"❌ Error while resetting RAG system: {e}")
-        raise e
+        if "does not exist" in str(e):
+            print("Collection does not exist. Initializing a new collection.")
+        else:
+            print(f"❌ Error while resetting RAG system: {e}")
+            raise e
 
 if __name__ == "__main__":
     # For testing purposes only, will be removed soon.

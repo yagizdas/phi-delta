@@ -39,6 +39,7 @@ Even if the question references a past tool use or step, if the user is asking *
 
 2) RAG 
 Choose this If the user's query can be answered directly from retrieved docs, choose this — even if phrased casually.
+DO NOT choose this option if user asks about images. 
 
 Choose this if:
 - **IMPORTANT:** The Retrieved Context above contains relevant information about the question OR the users query is about a specific document or file that is downloaded prior.

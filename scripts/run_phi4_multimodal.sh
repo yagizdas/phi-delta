@@ -10,7 +10,7 @@ echo "Starting VLLM server..."
 
 vllm serve microsoft/Phi-4-multimodal-instruct \
   --host 0.0.0.0 \
-  --port 8001 \
+  --port 8002 \
   --trust-remote-code \
   --gpu-memory-utilization 0.9 \
   --max-model-len 8192

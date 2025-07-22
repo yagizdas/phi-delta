@@ -4,14 +4,14 @@ from memory.memory import AgentMemory
 from agents import instance_agent, instance_llm
 from SessionRAG import init_rag
 from tools import initialize_tools
-from SessionRAG import add_to_rag, similarity_search, reset_rag
+from SessionRAG import add_to_rag, similarity_search
 from parsers import parse_router
 from agents import run_router, run_quickresponse, run_RAG_router
 from pipelines import agentic_behaviour, planner_behaviour
 from utils import create_session_id, create_session_directory
 from agents import run_rewriter, run_summarizer
 
-def init_agent(vectorstore= None, debug: bool = False) -> dict:
+def init_agent(passed_state= None, debug: bool = False) -> dict:
     """
     Initializes the agent with necessary components.
     Args:
@@ -20,21 +20,28 @@ def init_agent(vectorstore= None, debug: bool = False) -> dict:
     Returns:
         dict: A dictionary containing initialized components.
     """
-    memory          = AgentMemory(max_history_length=30)
-    llm             = instance_llm()
-    deterministic   = instance_llm(temperature=0.0)
+    memory = AgentMemory(max_history_length=30)
 
-    if vectorstore is None:
-        vectorstore, _ = init_rag()
+    session_id = create_session_id()
+    session_path = create_session_directory(session_id=session_id)
+
+    if passed_state is None:
+        vectorstore, embeddings = init_rag(session_id=session_id)
+        llm = instance_llm()
+        deterministic = instance_llm(temperature=0.0)
+        tools = initialize_tools(llm=llm, memory=memory, vectorstore=vectorstore, debug=debug)
+        agent = instance_agent(llm=llm, tools=tools)
+        
     else:
-        reset_rag(vectorstore=vectorstore, debug=debug)
+        print(passed_state)
+        vectorstore, embeddings = init_rag(embedding=passed_state.get("embeddings"), session_id=session_id)
+        llm = passed_state.get("llm")
+        deterministic = passed_state.get("deterministic")
+        agent = passed_state.get("agent")
 
-    tools           = initialize_tools(llm=llm, memory=memory, vectorstore=vectorstore, debug=debug)
-    agent           = instance_agent(llm=llm, tools=tools)
-    session_id      = create_session_id()
-    session_path    = create_session_directory(session_id=session_id)
     add_to_rag(vectorstore=vectorstore, session_path=session_path, debug=debug)
 
+    print(f"Session initialized.")  # Debug log
     return {
       "memory": memory,
       "llm": llm,
@@ -42,6 +49,7 @@ def init_agent(vectorstore= None, debug: bool = False) -> dict:
       "vectorstore": vectorstore,
       "agent": agent,
       "session_path": session_path,
+      "embeddings": embeddings
     }
 
 

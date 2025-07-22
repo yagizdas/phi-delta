@@ -75,7 +75,7 @@ class Phi4MMTool(BaseTool):
         }
 
         try:
-            response = requests.post("http://localhost:8001/v1/chat/completions", json=payload)
+            response = requests.post("http://localhost:8002/v1/chat/completions", json=payload)
             response.raise_for_status()
             return response.json()["choices"][0]["message"]["content"]
         except Exception as e:

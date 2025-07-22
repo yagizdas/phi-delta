@@ -128,7 +128,7 @@ async def upload_file(file: UploadFile = File(...)):
 
     # Check for existing file and increment suffix
     while save_path.exists():
-        save_path = Path(MAIN_PATH) / f"{base}_{counter}{ext}"
+        save_path = Path(session_path) / f"{base}_{counter}{ext}"
         counter += 1
 
     try:
@@ -156,25 +156,39 @@ async def new_chat():
     """
     Endpoint to start a new chat session.
     """
+    global state, processing_state
+
     try:
-        vectorstore = state["vectorstore"]
+        print("new chat called")
 
-        state = init_agent(vectorstore=vectorstore, debug=True)
+        # Ensure vectorstore is valid
 
-        # Add state management for async processing
-        processing_state = {
-            "is_processing": False,
-            "result": None,
-            "current_question": None
+        passed_state = {
+            "llm": state["llm"],
+            "agent": state["agent"],
+            "vectorstore": state["vectorstore"],
+            "deterministic": state["deterministic"],
+            "embeddings": state["embeddings"],
         }
 
-        print("New chat session initialized successfully.")
+        if not passed_state:
+            raise ValueError("Passed state is empty or invalid.")
 
-        return "New chat session started successfully."
+        # Reinitialize state
+        state = init_agent(passed_state, debug=True)
+        print("State initialized successfully.")
+
+        # Reset processing state
+        processing_state["is_processing"] = False
+        processing_state["result"] = None
+        processing_state["current_question"] = None
+        print("Processing state reset successfully.")
+
+        return ChatResponse(reply="New chat session started successfully.")
     
     except Exception as e:
         print(f"Error initializing new chat: {e}")
-        return f"Error: {str(e)}"
+        return ChatResponse(reply=f"Error: {str(e)}")
 
 
 
