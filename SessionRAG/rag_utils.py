@@ -25,6 +25,7 @@ def get_added_files(session_path: str = None) -> set:
         raise ValueError("Session path must be provided.")
     
     added_files_path = os.path.join(session_path, ADDED_FILES)
+    print(f"Retrieving added files from: {added_files_path}")  # Debug log
 
     if not os.path.exists(added_files_path):
         return set()

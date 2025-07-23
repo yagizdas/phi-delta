@@ -10,10 +10,12 @@ from .download_arxiv_pdfs import bound_download_tool
 from .list_directory import list_files_tool_wrapper
 from .wolfram_tool import run_wolfram_alpha_query
 from .rag_tool import rag_search_wrapper
+from functools import partial
 
 
 def initialize_tools(llm, memory : AgentMemory, 
                      vectorstore, 
+                     session_path: str = None,
                      debug: bool = False) -> list[Tool]:
     """
     Initialize the tools used in the application.
@@ -52,18 +54,19 @@ def initialize_tools(llm, memory : AgentMemory,
     download_tool = Tool.from_function(
 
         name="download_arxiv_pdfs",
-        func=lambda input_data: bound_download_tool(input_data, memory.arxiv_links),  # return just the message
+        func=lambda input_data: bound_download_tool(input_indices_str=input_data, links=memory.arxiv_links, session_path=session_path),  # return just the message
         description=("Downloads the PDF versions of academic papers from the last arxiv_search. It saves them locally for extensive analysis of the academic resources."
                      "Accepts a list of the wanted papers to be downloaded. " 
                      "Example input: '[x, y ,z]' where the x,y,z letters correspond to the indices of the papers in the last arxiv_search result.")
 
     )
+    print(f"Session path for download tool: {session_path}")
 
 
     list_files_tool = Tool.from_function(
 
         name="list_files",
-        func=list_files_tool_wrapper,
+        func=partial(list_files_tool_wrapper, session_path=session_path),
         description="Lists files in the directory. Optionally filter by file extension like 'pdf'."
 
     )

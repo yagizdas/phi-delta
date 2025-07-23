@@ -1,13 +1,16 @@
 from fastapi import FastAPI, UploadFile, File
 from pydantic import BaseModel
-from main import init_agent, get_reply, route_query
+from main import init_agent, get_reply, route_query, save_current_session, load_session_by_id, list_available_sessions, delete_session_by_id
 from fastapi import BackgroundTasks
 import asyncio
 import threading
+from session_manager import session_manager
 
 from pipelines import planner_behaviour, agentic_behaviour
 
 from SessionRAG import add_to_rag
+
+from utils import create_session_directory
 
 app = FastAPI()
 state = init_agent(debug=True)
@@ -31,6 +34,8 @@ def run_agentic_task(state, question, rag = False, debug=False):
         agent = state["agent"]
         vectorstore = state["vectorstore"]
         session_path = state["session_path"]
+        session_id = state.get("session_id")
+        
         plan = planner_behaviour(llm=llm, question=question, memory=memory, rag=rag, debug=debug)
         result = agentic_behaviour(llm=llm, agent=agent, plan=plan, question=question, memory=memory, rag=rag, log=debug)
         
@@ -46,6 +51,11 @@ def run_agentic_task(state, question, rag = False, debug=False):
 
         # adding if any files were downloaded
         add_to_rag(vectorstore=vectorstore, session_path=session_path, debug=debug)
+        
+        # Save session after agentic task completion
+        if session_id:
+            session_manager.save_session(session_id=session_id, session_path=session_path, memory=memory)
+            if debug: print(f"Session {session_id} saved after agentic task")
 
         print(f"Task fully completed. Processing state: {processing_state}")  # Debug log
         
@@ -61,6 +71,60 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     reply: str
+
+class SessionInfo(BaseModel):
+    session_id: str
+    session_path: str
+    timestamp: str
+    title: str
+
+@app.get("/sessions")
+async def get_sessions():
+    """Get list of all saved sessions"""
+    sessions = list_available_sessions()
+    return {"sessions": sessions}
+
+@app.post("/save-session")
+async def save_session():
+    """Save current session"""
+    session_id = save_current_session(state)
+    if session_id:
+        return {"status": "success", "session_id": session_id}
+    return {"status": "error", "message": "Failed to save session"}
+
+@app.post("/load-session/{session_id}")
+async def load_session(session_id: str):
+    """Load a session by ID"""
+    global state, processing_state
+    
+    try:
+        print("Loading session:", session_id)  # Debug log
+
+        session_path = create_session_directory(session_id=session_id)
+
+        state = load_session_by_id(session_id=session_id, session_path=session_path, debug=True)
+
+        print("Session state after loading:", state)  # Debug log
+
+        # Reset processing state
+        processing_state["is_processing"] = False
+        processing_state["result"] = None
+        processing_state["current_question"] = None
+        
+        return {"status": "success", "message": f"Session {session_id} loaded successfully"}
+    except Exception as e:
+        print("Error loading session:", e)  # Debug log
+        return {"status": "error", "message": str(e)}
+
+@app.delete("/session/{session_id}")
+async def delete_session(session_id: str):
+    """Delete a session by ID"""
+    session_path = create_session_directory(session_id=session_id)
+
+    success = delete_session_by_id(session_id=session_id, session_path=session_path)
+    if success:
+        return {"status": "success", "message": f"Session {session_id} deleted"}
+    return {"status": "error", "message": "Failed to delete session"}
 
 @app.get("/get-chat-history")
 async def get_chat_history():
@@ -89,6 +153,23 @@ async def get_final_result():
     print("No result available yet")  # Debug log
     return {"result": None}
 
+@app.get("/get-chat")
+async def get_chat():
+    memory = state["memory"]
+    chat_history = memory.chat_history_total
+    return {"chat": chat_history}
+
+@app.get("/current-session")
+async def get_current_session():
+    """Get current session information"""
+    session_id = state.get("session_id")
+    session_path = state.get("session_path")
+    return {
+        "session_id": session_id,
+        "session_path": session_path,
+        "has_session": session_id is not None
+    }
+
 @app.post("/reset-chat-history")
 async def reset_chat_history():
     memory = state["memory"]
@@ -99,14 +180,15 @@ async def reset_chat_history():
     processing_state["current_question"] = None
     return {"status": "cleared"}
 
-@app.get("/get-model-files")
-async def get_model_files():
+@app.get("/get-model-files/{session_id}")
+async def get_model_files(session_id: str):
     """
     Retrieves a list of model files for the given session ID.
     """
     import os
     from config import MAIN_PATH
-    model_files = [f for f in os.listdir(MAIN_PATH) if f.endswith('.pdf')]
+    session_path = create_session_directory(session_id=session_id)
+    model_files = [f for f in os.listdir(session_path) if not f.endswith('.json')]
     return model_files
 
 @app.post("/upload-file")
@@ -159,10 +241,11 @@ async def new_chat():
     global state, processing_state
 
     try:
-        print("new chat called")
-
-        # Ensure vectorstore is valid
-
+        # Save current session before starting new one
+        current_session_id = save_current_session(state)
+        if current_session_id:
+            print(f"Saved current session: {current_session_id}")
+        
         passed_state = {
             "llm": state["llm"],
             "agent": state["agent"],
@@ -174,9 +257,9 @@ async def new_chat():
         if not passed_state:
             raise ValueError("Passed state is empty or invalid.")
 
-        # Reinitialize state
+        # Reinitialize state with new session
         state = init_agent(passed_state, debug=True)
-        print("State initialized successfully.")
+        print(f"New session initialized: {state.get('session_id')}")
 
         # Reset processing state
         processing_state["is_processing"] = False
@@ -209,12 +292,10 @@ async def chat(req: ChatRequest, background_tasks: BackgroundTasks):
         return ChatResponse(reply="🔄 Processing your request... This may take a moment.")
     
     else:
-
         answer = get_reply(state, req.message, route, ctx, debug=False)
 
         # Answer returns True if it indicates an agentic task should be run after RAG routing. This is handled in the main.py logic.
         if answer == True:
-
             print("RAG Agentic task triggered")
             background_tasks.add_task(run_agentic_task, state, req.message, True, True)  # Enable debug, RAG
 
@@ -222,4 +303,5 @@ async def chat(req: ChatRequest, background_tasks: BackgroundTasks):
 
             return ChatResponse(reply="🔄 Processing your request... This may take a moment.")
         
+        # Session is automatically saved in get_reply function
         return ChatResponse(reply=answer)

@@ -27,6 +27,8 @@ def agentic_behaviour(llm: ChatOpenAI,
         if log:
             print("-"*60 + f" {i}th Step " + "-"*60)
 
+        print(i, j, plan[i])
+
         humanized_step_desc = run_humanizer(llm, plan[i])
 
 
@@ -74,9 +76,11 @@ def agentic_behaviour(llm: ChatOpenAI,
         
         parsed_eval = parse_eval(evaluation)
 
+        print(parsed_eval)
+
         if parsed_eval == -1:
             break
-        
+                
         elif isinstance(parsed_eval, str):
             
             i = 0
@@ -84,12 +88,13 @@ def agentic_behaviour(llm: ChatOpenAI,
 
             #declaring the new plan
             plan = parsed_eval
+
             
             print("\n\nChanged plans\n\n")
 
-            memory.chat_history.append({"role":"system","content":evaluation})
+            print(f"\n\nNew plan length: {len(plan)}\n\n")
 
-            
+            memory.chat_history.append({"role":"system","content":evaluation})
 
             continue
 
@@ -102,7 +107,8 @@ def agentic_behaviour(llm: ChatOpenAI,
         j += 1
 
     finalized_answer = run_finalizer(llm,memory)
-    
+    memory.chat_history_total.append({"role":"assistant","content":finalized_answer})
+
     memory.thinkingsteps.clear()
     
     return finalized_answer

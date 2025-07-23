@@ -5,13 +5,17 @@ from config import MAIN_PATH
 import ast
 import re 
 
-def bound_download_tool(input_indices_str, links):
-    print(f"Download tool invoked, Input indices string: {input_indices_str}")
+def bound_download_tool(input_indices_str, links, session_path: str = MAIN_PATH) -> Tuple[str, List[str]]:
+    print(f"\n\n\n\n\n\nDownload tool invoked, Input indices string: {input_indices_str}\n\n\n\n\n")
     input_indices = ast.literal_eval(input_indices_str)  # Converts "[1, 2]" -> [1, 2]
-    return download_arxiv_pdfs(input_indices, links)
+    return download_arxiv_pdfs(input_indices, links, save_directory=session_path)
 
 def download_arxiv_pdfs(choices: List[int], links: List[str], save_directory: str = MAIN_PATH) -> Tuple[str, List[str]]:
     
+    print(f"Choices: {choices}")
+    print(f"Links: {links}")
+    print(f"Save directory: {save_directory}")
+
     downloaded_file_paths = []
 
     def convert_to_pdf_url(url: str) -> str:
@@ -36,10 +40,13 @@ def download_arxiv_pdfs(choices: List[int], links: List[str], save_directory: st
         # Better Document Names
         doc_name = re.sub(r'[^\w]', '_', doc_name) + ".pdf"
         
-        filepath = Path(save_directory) / doc_name 
+        filepath = Path(save_directory) / doc_name
+
+        print(f"Downloading {pdf_url} to {filepath}...") 
 
         try:
             response = requests.get(pdf_url)
+            print(f"Response status: {response}")
             response.raise_for_status()
             with open(filepath, "wb") as f:
                 f.write(response.content)

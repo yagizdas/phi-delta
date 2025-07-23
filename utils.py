@@ -4,6 +4,9 @@ from config import MAIN_PATH, SESSION_BASED_PATHING
 import os
 
 def extract_tool_names(conversation:dict) -> list[str]:
+    """
+    Extracts tool names from a conversation dictionary.
+    """
     tool_names = set()
     for msg in conversation.get('messages', []):
         calls = []

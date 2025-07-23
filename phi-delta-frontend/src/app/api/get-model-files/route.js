@@ -1,11 +1,20 @@
 // src/app/api/get-model-files/route.js
 import { NextResponse } from 'next/server';
 
-export async function GET() {
+export async function GET(request) {
   try {
-    console.log('🔗 API Route: Fetching model files from server at http://localhost:8001/get-model-files');
+    // Get session_id from query parameters
+    const { searchParams } = new URL(request.url);
+    const sessionId = searchParams.get('session_id');
     
-    const res = await fetch('http://localhost:8001/get-model-files');
+    console.log('🔗 API Route: Fetching model files for session:', sessionId);
+    
+    if (!sessionId) {
+      console.error('❌ API Route: No session_id provided');
+      return NextResponse.json([]);
+    }
+    
+    const res = await fetch(`http://localhost:8001/get-model-files/${sessionId}`);
     console.log('📡 Server response status:', res.status, res.statusText);
     
     if (!res.ok) {

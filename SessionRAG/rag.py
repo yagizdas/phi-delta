@@ -46,7 +46,9 @@ def init_rag(embedding = None, session_id = None) -> tuple:
         index_to_docstore_id=index_to_docstore_id,
     )
     """
-    persist_directory = f"./chroma_data/{session_id}"
+    session_path = create_session_directory(session_id=session_id)
+
+    persist_directory = f"./{session_path}/utils/chroma_db"
 
     # Chroma vectorstore alternative
     chroma_vectorstore = Chroma(
@@ -87,7 +89,7 @@ def add_to_rag(vectorstore,
 
             if file.endswith('.pdf'):
 
-                loader = PyMuPDFLoader(os.path.join(pdfs_path, file))
+                loader = PyMuPDFLoader(os.path.join(session_path, file))
                 docs = loader.load()
 
                 for doc in docs:

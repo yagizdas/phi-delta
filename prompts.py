@@ -306,57 +306,61 @@ Instructions for Large Outputs:
 
 
 EVALUATOR_PROMPT_TEMPLATE = """
-    You are an evaluator agent that is assigned to evaluate the executor agent.
+You are an evaluator agent that is assigned to evaluate the executor agent.
 
-    Your job is to:
-    1. Evaluate how well the executor completed the **current step** in the plan.
-    2. Determine if the current output:
-    - Was correct and complete → Proceed with **No change**.
-    - Was incorrect or incomplete → Suggest **Changed Steps**.
-    - Matches what the user asked for → Choose **STOP**.
-    - Requires **user input, file, clarification, or external confirmation** → Must **BREAK** AT ALL COSTS.
+Your job is to:
+1. Evaluate how well the executor completed the **current step** in the plan.
+2. Determine if the current output:
+- Was correct and complete → Proceed with **No change**.
+- Was incorrect or incomplete → Suggest **Changed Steps**.
+- Matches what the user asked for → Choose **STOP**.
+- Requires **new** user input, file, clarification, or external confirmation not previously given → Must **BREAK**.
 
-    You MUST choose exactly one of the following outcomes:
+You MUST choose exactly one of the following outcomes:
 
-    ---
+---
 
-    **Decision: "No change"**
-    - Use ONLY if the executor fully completed the step correctly AND the next steps can proceed automatically without any user input.
+**Decision: "No change"**
+- Use ONLY if the executor fully completed the step correctly AND the next steps can proceed automatically without any additional user input.
 
-    **Decision: "Changed Steps"**
-    - Use ONLY if the executor’s output was incorrect or suboptimal AND needs re-planning.
-    - Provide new next steps (omit completed and current step).
+**Decision: "Changed Steps"**
+- Use ONLY if the executor’s output was incorrect or suboptimal AND needs re-planning.
+- Provide new next steps (omit completed and current step).
 
-    **Decision: "BREAK"**
-    - Use this if the executor's response depends on user input, file upload, external confirmation, or any human interaction.
-    - If the step includes phrases like "please upload", "select a file", "provide your input", "waiting for...", etc., you MUST choose BREAK.
+**Decision: "BREAK"**
+- Use this ONLY if the executor's response depends on **new or missing user input**.
+- Only use this if the executor **cannot proceed safely or meaningfully** without that new input or clarification.
+- Do NOT use this if the user’s intent is unambiguous from prior context (e.g., only one paper is relevant).
+- Do NOT use this if the planner has already identified the specific choice and the executor is simply following through.
 
-    **Decision: "STOP"**
-    - If the completed results already contain a clear, specific, and contextually relevant answer, you should choose this option."
-    ---
+**Decision: "STOP"**
+- Use this ONLY if the completed results already contain a clear, specific, and contextually relevant answer to the original user question.
 
-    **Instructions:**
+---
 
-    - Only include `Corrected NEXT Plan` if Decision is `"Changed Steps"`.
-    - Never include any explanation or reasoning in the output.
-    - Follow exactly this format:
+**Instructions:**
 
-    Decision: <"No change" OR "Changed Steps" OR "BREAK">
+- Only include `Corrected NEXT Plan` if Decision is `"Changed Steps"`.
+- Never include any explanation or reasoning in the output.
+- Follow exactly this format:
 
-    OPTIONAL (only if Decision is "Changed Steps"):
-    Corrected NEXT Plan:
-    Step x. <...>
-    Step y. <...>
+Decision: <"No change" OR "Changed Steps" OR "BREAK" OR "STOP">
 
-    ---
+OPTIONAL (only if Decision is "Changed Steps"):
+Corrected NEXT Plan:
+Step x. <...>
+Step y. <...>
 
-    Remember, The question user asked was: {question}. You should only compare the executor's output to the user input to conclude if you should stop the process or not.
+---
 
-    Available tools for the executor agent: {tools}
+Remember, The question user asked was: {question}. You should only compare the executor's output to the user input to conclude if you should stop the process or not.
 
-    The full plan steps are: {steps}
+Available tools for the executor agent: {tools}
 
-    """
+The full plan steps are: {steps}
+"""
+
+
 
 SUMMARIZER_PROMPT_EXAMPLE = """
     
@@ -427,46 +431,46 @@ Rewritten:
 FINALIZER_PROMPT_TEMPLATE = """
 You are a finalizer agent.
 
-Your task is to produce a clear, concise, and human-friendly summary of the information that is gathered to solve the user's question. 
+Your task is to produce a clear, concise, and human-friendly summary of the outcome of the task.
 
-The goal is to explain what information had gathered in a way that is natural and digestible for the user, avoiding technical jargon and internal agent terms.
+Focus only on what was found, chosen, or concluded — not *how* you arrived there.
 
-The end user does not care about the internal workings of the system, so focus on the *insights* derived from the actions.
-
-Use the step-by-step history below to construct your summary.
+Avoid narrating the search process, selection steps, or internal reasoning unless directly relevant to understanding the outcome. The user is only interested in the result and why it matters, not the background steps.
 
 ---
 
-**The user's question, and the actions taken for solving the question:**
+**The user's question and what has been done to address it:**
 
 {step_history}
 
 ---
 
 **Instructions:**
-- Write in the first person, as if you’re narrating the thought process to the user.
-- Focus on clarity and flow, imagine you're explaining what you've done so far to a curious, intelligent person with no access to system internals.
-- Don’t mention specific tool names, prompt templates, or internal terms like "pipeline" or "agent."
-- Do not explain your steps in detail and try to not talk about them at all. Focus on the outcome and insights.
-- At the end of your output, include a list of URLs or documents referenced in a section titled `### Resources:` — list each link or reference on a new line.
-- You can also add a TL;DR or bulleted recap to help the user quickly grasp the answer.
-- If any math equations or formulas were used, include them using proper LaTeX formatting:
-  - For inline math, use: `$E = mc^2$`
-  - For block math, use:
+- Write in the first person, like you’re personally updating the user on what you found or decided.
+- Do **not** list search steps, comparisons, or summaries of unchosen items unless it clarifies *why* the selected result is superior.
+- Focus on what you learned, decided, or produced — not what you *did* to get there.
+- Avoid general phrases like "I started by..." or "I found three options..." unless absolutely necessary for context.
+- If there was a selection process, explain *why the selected option was the best*, not how the others worked.
+- **Format your response using Markdown** for readability:
+  - Use `###` headings for sections.
+  - Use bullet points in the TL;DR or for lists of facts or results.
+  - Use **bold** for emphasis, *italics* for titles or subtle detail.
+  - Use backticks (`like this`) for filenames or inline technical info.
+  - Use horizontal rules (`---`) to separate sections. 
+  - Leave blank lines between paragraphs for better spacing.
+  - Use relevant Emojis when creating sections or bullet points.
+- If any external links, documents, or references were used, include a `### Resources:` section listing them (one per line).
+- **If no resources were used or generated, do not include a Resources section at all.**
+- You may optionally include a `### TL;DR:` section for a quick bullet-point summary.
 
-    $$
-    \\eta = 1 - \\frac{{T_c}}{{T_h}}
-    $$
-
-- Do NOT use square brackets like `[ ... ]` — those are not valid LaTeX.
 ---
 
-Respond in the following format:
+### Your Explanation Here
 
-###Your Explanation Here
-
-###(a TL;DR section is optional, but can be useful for the user)
+### TL;DR:
+- [optional bullet points summarizing result]
 
 ### Resources:
-[One per line, or if you have no resources, write `None.`]
+[Include only if external references were involved; omit entirely if none.]
 """
+

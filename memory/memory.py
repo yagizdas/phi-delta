@@ -7,13 +7,17 @@ class AgentMemory:
     def __init__(self, max_history_length: int = 20):
         self.arxiv_links: List[str] = []
         self.chat_history: List[Dict] = []
+        self.chat_history_total: List[Dict] = []
         self.chat_summary: str = ""
         self.step_history: List[Dict] = []
         self.thinkingsteps: List[Dict] = []
         self.max_history_length = max_history_length
 
     def add(self, role: str, content: str):
+        # Chat history for the context follow-up, dynamically managed
         self.chat_history.append({"role": role, "content": content})
+        # Total chat history for saving all interactions
+        self.chat_history_total.append({"role": role, "content": content})
         self._manage_history_length()
     
     def _manage_history_length(self):
@@ -91,5 +95,29 @@ class AgentMemory:
     def clear(self):
         self.chat_history = []
         self.arxiv_links = []
+    
+    def to_dict(self) -> dict:
+        """Convert the memory object to a dictionary for serialization"""
+        return {
+            "arxiv_links": self.arxiv_links,
+            "chat_history": self.chat_history,
+            "chat_summary": self.chat_summary,
+            "step_history": self.step_history,
+            "thinkingsteps": self.thinkingsteps,
+            "max_history_length": self.max_history_length,
+            "chat_history_total": self.chat_history_total
+        }
+    
+    @classmethod
+    def from_dict(cls, data: dict) -> 'AgentMemory':
+        """Create an AgentMemory instance from a dictionary"""
+        memory = cls(max_history_length=data.get("max_history_length", 20))
+        memory.arxiv_links = data.get("arxiv_links", [])
+        memory.chat_history = data.get("chat_history", [])
+        memory.chat_summary = data.get("chat_summary", "")
+        memory.step_history = data.get("step_history", [])
+        memory.thinkingsteps = data.get("thinkingsteps", [])
+        memory.chat_history_total = data.get("chat_history_total", [])
+        return memory
 
 
