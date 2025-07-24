@@ -19,6 +19,7 @@ export default function ChatInterface() {
   const [sessions, setSessions] = useState([]);
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState(null);
+  const [isModelFilesBubbleOpen, setIsModelFilesBubbleOpen] = useState(false);
   const containerRef = useRef(null);
   const fileInputRef = useRef(null);
   const currentThinkingStepsRef = useRef([]);
@@ -223,6 +224,20 @@ export default function ChatInterface() {
       fetchSessions();
     }
   }, [isSidebarOpen]);
+
+  // Close model files bubble when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isModelFilesBubbleOpen && !event.target.closest('.model-files-bubble')) {
+        setIsModelFilesBubbleOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isModelFilesBubbleOpen]);
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -447,19 +462,30 @@ export default function ChatInterface() {
     }
   };
 
+  // Function to remove a file from chat (for deselecting)
+  const removeModelFileFromChat = (fileName) => {
+    setUploadedFiles(prev => prev.filter(file => file.name !== fileName));
+    console.log('❌ Model file removed from chat:', fileName);
+  };
+
+  // Helper function to check if a file is already added to chat
+  const isFileAddedToChat = (fileName) => {
+    return uploadedFiles.some(file => file.name === fileName);
+  };
+
 
   return (
     <div className="h-screen flex bg-slate-900">
       {/* Sidebar */}
-      <div className={`${isSidebarOpen ? 'w-80' : 'w-0'} transition-all duration-300 bg-slate-800/50 backdrop-blur-sm border-r border-slate-700/50 overflow-hidden`}>
+      <div className={`${isSidebarOpen ? 'w-80' : 'w-0'} transition-all duration-300 bg-slate-800/60 backdrop-blur-md border-r border-slate-700/50 overflow-hidden`}>
         <div className="h-full flex flex-col">
           {/* Sidebar Header */}
-          <div className="p-4 border-b border-slate-700/50">
+          <div className="p-6 border-b border-slate-700/30">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-200">Chat History</h2>
+              <h2 className="text-xl font-bold bg-gradient-to-r from-slate-200 to-slate-300 bg-clip-text text-transparent">Chat History</h2>
               <button
                 onClick={() => setIsSidebarOpen(false)}
-                className="text-slate-400 hover:text-slate-200 transition-colors"
+                className="text-slate-400 hover:text-slate-200 p-2 rounded-lg hover:bg-slate-700/50 transition-all duration-200"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -468,92 +494,90 @@ export default function ChatInterface() {
             </div>
           </div>
           
-          {/* Content Tabs */}
+          {/* Content */}
           <div className="flex-1 overflow-y-auto">
             {/* Sessions Section */}
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-medium text-slate-300">Saved Sessions</h3>
-                <button
-                  onClick={saveCurrentSession}
-                  className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
-                >
-                  Save
-                </button>
-              </div>
-              
+            <div className="p-6">
               {isLoadingSessions ? (
-                <div className="text-slate-400 text-sm text-center py-4">
-                  Loading sessions...
+                <div className="flex flex-col items-center justify-center py-12 space-y-3">
+                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-emerald-400 border-t-transparent"></div>
+                  <span className="text-slate-400 text-sm">Loading sessions...</span>
                 </div>
               ) : sessions.length === 0 ? (
-                <div className="text-slate-400 text-sm text-center py-4">
-                  No saved sessions
+                <div className="flex flex-col items-center justify-center py-12 space-y-3">
+                  <div className="w-16 h-16 rounded-full bg-slate-700/50 flex items-center justify-center">
+                    <svg className="w-8 h-8 text-slate-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <span className="text-slate-400 text-sm">No saved conversations yet</span>
+                  <span className="text-slate-500 text-xs text-center px-4">Start chatting to create your first session</span>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {sessions.slice(0, 10).map((session) => (
-                    <div
-                      key={session.session_id}
-                      className="group relative p-3 rounded-lg border transition-all duration-200 cursor-pointer bg-slate-700/30 border-slate-600/50 text-slate-300 hover:bg-slate-700/50 hover:border-slate-500/50"
-                    >
-                      <div 
-                        className="flex-1 pr-8"
+                <div className="space-y-3">
+                  {sessions.slice(0, 10).map((session, index) => {
+                    const isCurrentSession = currentSessionId === session.session_id;
+                    return (
+                      <div
+                        key={session.session_id}
+                        className={`group relative p-4 rounded-xl border transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-slate-900/20 hover:-translate-y-0.5 ${
+                          isCurrentSession
+                            ? 'bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border-emerald-500/50 shadow-lg shadow-emerald-900/20'
+                            : 'bg-gradient-to-br from-slate-700/30 to-slate-700/20 border-slate-600/40 hover:from-slate-600/40 hover:to-slate-600/30 hover:border-slate-500/60'
+                        }`}
                         onClick={() => loadSession(session.session_id)}
                       >
-                        <div className="text-sm font-medium truncate">
-                          {session.title}
-                        </div>
-                        <div className="text-xs text-slate-400 mt-1">
-                          {new Date(session.timestamp).toLocaleDateString()}
-                        </div>
-                      </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteSession(session.session_id);
-                        }}
-                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-400 transition-all"
-                      >
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" clipRule="evenodd" />
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                        </svg>
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            
-            {/* Model Files Section */}
-            <div className="p-4 border-t border-slate-700/50">
-              <h3 className="text-sm font-medium text-slate-300 mb-3">Model Files</h3>
-              {modelFiles.length === 0 ? (
-                <div className="text-slate-400 text-sm text-center py-4">
-                  No model files found
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {modelFiles.map((file, index) => (
-                    <div
-                      key={index}
-                      className="group relative p-3 rounded-lg border transition-all duration-200 cursor-pointer bg-slate-700/30 border-slate-600/50 text-slate-300 hover:bg-slate-700/50 hover:border-slate-500/50"
-                      onClick={() => addModelFileToChat(file)}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <div className="flex-shrink-0">
-                          <svg className="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{file}</p>
-                          <p className="text-xs text-slate-400">PDF Document</p>
+                        <div className="flex items-start space-x-3">
+                          <div className="flex-shrink-0 mt-1">
+                            <div className={`w-8 h-8 rounded-lg border flex items-center justify-center ${
+                              isCurrentSession
+                                ? 'bg-gradient-to-br from-emerald-500/30 to-teal-500/30 border-emerald-500/60'
+                                : 'bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border-emerald-500/30'
+                            }`}>
+                              <span className={`font-bold text-sm ${
+                                isCurrentSession ? 'text-emerald-300' : 'text-emerald-400'
+                              }`}>
+                                {index + 1}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className={`text-sm font-medium truncate transition-colors ${
+                              isCurrentSession 
+                                ? 'text-emerald-100 group-hover:text-emerald-50' 
+                                : 'text-slate-200 group-hover:text-white'
+                            }`}>
+                              {session.title}
+                            </div>
+                            <div className={`text-xs mt-1 transition-colors ${
+                              isCurrentSession 
+                                ? 'text-emerald-400/80 group-hover:text-emerald-300' 
+                                : 'text-slate-500 group-hover:text-slate-400'
+                            }`}>
+                              {isCurrentSession ? 'Current session' : session.session_id.slice(0, 20) + '...'}
+                            </div>
+                          </div>
+                          {isCurrentSession && (
+                            <div className="flex-shrink-0 flex items-center mt-3">
+                              <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse"></div>
+                            </div>
+                          )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteSession(session.session_id);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 p-1 rounded-md hover:bg-red-500/10 transition-all duration-200"
+                          >
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" clipRule="evenodd" />
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                            </svg>
+                          </button>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -593,6 +617,122 @@ export default function ChatInterface() {
           </svg>
           <span className="font-medium text-sm">New Chat</span>
         </button>
+
+        {/* Model Files Bubble */}
+        <div className="fixed top-2 right-36 z-30 model-files-bubble">
+          <button
+            onClick={() => setIsModelFilesBubbleOpen(!isModelFilesBubbleOpen)}
+            className="bg-slate-800/80 backdrop-blur-sm border border-slate-700/50 text-slate-300 hover:text-slate-100 hover:bg-slate-700/80 hover:scale-105 p-3 rounded-lg transition-all duration-200 shadow-lg cursor-pointer group flex items-center space-x-2"
+          >
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+            </svg>
+            <span className="font-medium text-sm hidden sm:block">Files</span>
+            {modelFiles.length > 0 && (
+              <span className="bg-emerald-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                {modelFiles.length}
+              </span>
+            )}
+          </button>
+          
+          {/* Model Files Dropdown */}
+          {isModelFilesBubbleOpen && (
+            <div className="absolute top-full right-0 mt-2 w-80 bg-slate-800/95 backdrop-blur-md border border-slate-700/50 rounded-xl shadow-2xl shadow-slate-900/50 overflow-hidden animate-in slide-in-from-top-2 duration-200">
+              <div className="p-4 border-b border-slate-700/50">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-slate-200">Session Files</h3>
+                  <button
+                    onClick={() => setIsModelFilesBubbleOpen(false)}
+                    className="text-slate-400 hover:text-slate-200 p-1 rounded-md hover:bg-slate-700/50 transition-all duration-200"
+                  >
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              
+              <div className="max-h-64 overflow-y-auto p-4">
+                {modelFiles.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8 space-y-3">
+                    <div className="w-12 h-12 rounded-full bg-slate-700/50 flex items-center justify-center">
+                      <svg className="w-6 h-6 text-slate-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-slate-400 text-sm">No files in this session</p>
+                      <p className="text-slate-500 text-xs mt-1">Upload documents to get started</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {modelFiles.map((file, index) => {
+                      const isAdded = isFileAddedToChat(file);
+                      return (
+                        <div
+                          key={index}
+                          className={`group relative p-3 rounded-lg border transition-all duration-200 cursor-pointer text-slate-300 hover:shadow-lg hover:-translate-y-0.5 ${
+                            isAdded 
+                              ? 'bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border-emerald-500/40 hover:from-emerald-500/30 hover:to-teal-500/30 hover:border-emerald-500/60' 
+                              : 'bg-slate-700/30 border-slate-600/40 hover:bg-slate-600/40 hover:border-slate-500/60'
+                          }`}
+                          onClick={() => {
+                            if (isAdded) {
+                              removeModelFileFromChat(file);
+                            } else {
+                              addModelFileToChat(file);
+                            }
+                            // Don't close the bubble when adding/removing a file
+                          }}
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div className="flex-shrink-0">
+                              <div className={`w-8 h-8 rounded-lg border flex items-center justify-center ${
+                                isAdded 
+                                  ? 'bg-gradient-to-br from-emerald-500/30 to-teal-500/30 border-emerald-500/50' 
+                                  : 'bg-gradient-to-br from-blue-500/20 to-purple-500/20 border-blue-500/30'
+                              }`}>
+                                <svg className={`w-4 h-4 ${isAdded ? 'text-emerald-300' : 'text-blue-400'}`} fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+                                </svg>
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-sm font-medium truncate transition-colors ${
+                                isAdded 
+                                  ? 'text-emerald-200 group-hover:text-emerald-100' 
+                                  : 'group-hover:text-white'
+                              }`}>{file}</p>
+                              <p className={`text-xs transition-colors ${
+                                isAdded 
+                                  ? 'text-emerald-400/80 group-hover:text-emerald-300' 
+                                  : 'text-slate-500 group-hover:text-slate-400'
+                              }`}>
+                                {isAdded ? 'Click to remove' : 'Click to attach'}
+                              </p>
+                            </div>
+                            <div className={`transition-opacity ${isAdded ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                              {isAdded ? (
+                                <svg className="w-4 h-4 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                </svg>
+                              ) : (
+                                <svg className="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                                </svg>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Horizontal nav lock-up - sticky app bar */}
         <header className="sticky top-0 z-20 bg-slate-900/80 backdrop-blur-md border-b border-slate-700/50">

@@ -59,6 +59,11 @@ def init_rag(embedding = None, session_id = None) -> tuple:
     
     vectorstore = chroma_vectorstore
 
+    print(f"RAG system initialized with session ID: {session_id}")
+    print(f"Documents:{vectorstore.get()['documents']}")
+    print(f"metadatas:{vectorstore.get()['metadatas']}")
+
+
     return vectorstore, embeddings
 
 

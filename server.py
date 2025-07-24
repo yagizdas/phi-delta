@@ -188,7 +188,7 @@ async def get_model_files(session_id: str):
     import os
     from config import MAIN_PATH
     session_path = create_session_directory(session_id=session_id)
-    model_files = [f for f in os.listdir(session_path) if not f.endswith('.json')]
+    model_files = [f for f in os.listdir(session_path) if not f.endswith('.json') and not f.endswith('.txt') and not os.path.isdir(os.path.join(session_path, f))]
     return model_files
 
 @app.post("/upload-file")
@@ -197,13 +197,12 @@ async def upload_file(file: UploadFile = File(...)):
     Endpoint to upload a file to the server.
     """
     from pathlib import Path
-    from config import MAIN_PATH
 
     vectorstore = state["vectorstore"]
     session_path = state["session_path"]
 
-    # Ensure MAIN_PATH is a Path object
-    save_path = Path(MAIN_PATH) / file.filename
+    # Save to session directory instead of MAIN_PATH
+    save_path = Path(session_path) / file.filename
     base = save_path.stem
     ext = save_path.suffix
     counter = 2
