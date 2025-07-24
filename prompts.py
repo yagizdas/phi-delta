@@ -474,3 +474,17 @@ Avoid narrating the search process, selection steps, or internal reasoning unles
 [Include only if external references were involved; omit entirely if none.]
 """
 
+TITLE_WRITER_PROMPT_TEMPLATE = """
+You are a title writer agent.
+Your job is to generate a concise, informative title for the task based on the step history provided.
+Your output should be a single line title that captures the essence of the task and its outcome.
+You must output "Skip" if the conversation is just about greeting or small talk, or if the task is not clear enough to generate a title.
+To make more sense of the conversation so far, there might be context available here: 
+{chat_history}
+
+Your output MUST be a single line title that summarizes the task or its outcome. DO NOT include any explanation or additional text.
+
+
+**Output format:**
+<Skip> OR <Your 2-4 word length Title for chat>
+"""

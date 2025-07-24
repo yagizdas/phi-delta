@@ -23,6 +23,7 @@ export default function ChatInterface() {
   const containerRef = useRef(null);
   const fileInputRef = useRef(null);
   const currentThinkingStepsRef = useRef([]);
+  const titleGenerationTimeoutRef = useRef(null);
 
   useEffect(() => {
     if (containerRef.current) {
@@ -79,6 +80,12 @@ export default function ChatInterface() {
 
 
     const handleNewChat = async () => {
+    // Clear title generation timeout
+    if (titleGenerationTimeoutRef.current) {
+      clearTimeout(titleGenerationTimeoutRef.current);
+      titleGenerationTimeoutRef.current = null;
+    }
+
     const newChat = await fetch('/api/new-chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -162,6 +169,12 @@ export default function ChatInterface() {
   };
 
   const loadSession = async (sessionId) => {
+    // Clear title generation timeout
+    if (titleGenerationTimeoutRef.current) {
+      clearTimeout(titleGenerationTimeoutRef.current);
+      titleGenerationTimeoutRef.current = null;
+    }
+
     try {
       const response = await fetch(`/api/load-session/${sessionId}`, {
         method: 'POST',
@@ -473,6 +486,73 @@ export default function ChatInterface() {
     return uploadedFiles.some(file => file.name === fileName);
   };
 
+  // Function to generate chat title
+  const generateChatTitle = async (sessionId) => {
+    if (!sessionId) return;
+    
+    try {
+      console.log('🏷️ Generating title for session:', sessionId);
+      const response = await fetch(`/api/get-chat-title/${sessionId}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.status === 'success') {
+          console.log('✅ Title generated:', data.title);
+          // Always refresh sessions to show the new title, regardless of sidebar state
+          await fetchSessions();
+        }
+      } else {
+        console.error('❌ Failed to generate title');
+      }
+    } catch (error) {
+      console.error('💥 Error generating title:', error);
+    }
+  };
+
+  // Function to schedule title generation after idle period
+  const scheduleTitleGeneration = () => {
+    // Clear any existing timeout
+    if (titleGenerationTimeoutRef.current) {
+      clearTimeout(titleGenerationTimeoutRef.current);
+    }
+
+    // Only generate title if we have a current session and some messages
+    if (currentSessionId && messages.length >= 2) { // At least one exchange (user + assistant)
+      titleGenerationTimeoutRef.current = setTimeout(() => {
+        generateChatTitle(currentSessionId);
+      }, 3000); // 3 seconds of idle time
+    }
+  };
+
+  // Effect to trigger title generation when conversation ends and user goes idle
+  useEffect(() => {
+    // Schedule title generation when:
+    // 1. Not currently thinking/processing
+    // 2. Have messages in the conversation
+    // 3. Have a current session
+    if (!isThinking && messages.length >= 2 && currentSessionId) {
+      scheduleTitleGeneration();
+    }
+
+    // Cleanup timeout on unmount
+    return () => {
+      if (titleGenerationTimeoutRef.current) {
+        clearTimeout(titleGenerationTimeoutRef.current);
+      }
+    };
+  }, [isThinking, messages.length, currentSessionId]);
+
+  // Clear title generation timeout when user starts typing
+  const handleInputChange = (e) => {
+    setInput(e.target.value);
+    
+    // Clear title generation timeout when user starts typing
+    if (titleGenerationTimeoutRef.current) {
+      clearTimeout(titleGenerationTimeoutRef.current);
+      titleGenerationTimeoutRef.current = null;
+    }
+  };
+
 
   return (
     <div className="h-screen flex bg-slate-900">
@@ -482,7 +562,7 @@ export default function ChatInterface() {
           {/* Sidebar Header */}
           <div className="p-6 border-b border-slate-700/30">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold bg-gradient-to-r from-slate-200 to-slate-300 bg-clip-text text-transparent">Chat History</h2>
+              <h2 className="text-xl font-bold bg-gradient-to-r from-slate-200 to-slate-300 bg-clip-text text-transparent">Conversations</h2>
               <button
                 onClick={() => setIsSidebarOpen(false)}
                 className="text-slate-400 hover:text-slate-200 p-2 rounded-lg hover:bg-slate-700/50 transition-all duration-200"
@@ -527,53 +607,49 @@ export default function ChatInterface() {
                         }`}
                         onClick={() => loadSession(session.session_id)}
                       >
-                        <div className="flex items-start space-x-3">
-                          <div className="flex-shrink-0 mt-1">
-                            <div className={`w-8 h-8 rounded-lg border flex items-center justify-center ${
-                              isCurrentSession
-                                ? 'bg-gradient-to-br from-emerald-500/30 to-teal-500/30 border-emerald-500/60'
-                                : 'bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border-emerald-500/30'
-                            }`}>
-                              <span className={`font-bold text-sm ${
-                                isCurrentSession ? 'text-emerald-300' : 'text-emerald-400'
-                              }`}>
-                                {index + 1}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className={`text-sm font-medium truncate transition-colors ${
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0 pr-3">
+                            <div className={`font-medium leading-relaxed transition-colors ${
                               isCurrentSession 
                                 ? 'text-emerald-100 group-hover:text-emerald-50' 
                                 : 'text-slate-200 group-hover:text-white'
-                            }`}>
+                            }`} style={{ 
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden',
+                              lineHeight: '1.4',
+                              maxHeight: '2.8em'
+                            }}>
                               {session.title}
                             </div>
-                            <div className={`text-xs mt-1 transition-colors ${
+                            <div className={`text-xs mt-2 transition-colors ${
                               isCurrentSession 
                                 ? 'text-emerald-400/80 group-hover:text-emerald-300' 
                                 : 'text-slate-500 group-hover:text-slate-400'
                             }`}>
-                              {isCurrentSession ? 'Current session' : session.session_id.slice(0, 20) + '...'}
+                              {isCurrentSession ? 'Current session' : new Date(session.timestamp).toLocaleDateString()}
                             </div>
                           </div>
-                          {isCurrentSession && (
-                            <div className="flex-shrink-0 flex items-center mt-3">
-                              <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse"></div>
-                            </div>
-                          )}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteSession(session.session_id);
-                            }}
-                            className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 p-1 rounded-md hover:bg-red-500/10 transition-all duration-200"
-                          >
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" clipRule="evenodd" />
-                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                            </svg>
-                          </button>
+                          <div className="flex-shrink-0 flex items-start space-x-2">
+                            {isCurrentSession && (
+                              <div className="flex items-center mt-1">
+                                <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+                              </div>
+                            )}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteSession(session.session_id);
+                              }}
+                              className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 p-1 rounded-md hover:bg-red-500/10 transition-all duration-200"
+                            >
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" clipRule="evenodd" />
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                              </svg>
+                            </button>
+                          </div>
                         </div>
                       </div>
                     );
@@ -1122,7 +1198,7 @@ export default function ChatInterface() {
                   className="w-full bg-slate-700/50 backdrop-blur-sm border border-slate-600/50 rounded-4xl p-4 text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 resize-none transition-all duration-200 shadow-lg"
                   placeholder="Ask your research question..."
                   value={input}
-                  onChange={e => setInput(e.target.value)}
+                  onChange={handleInputChange}
                   onKeyDown={handleKeyDown}
                   rows={2}
                 />

@@ -12,6 +12,8 @@ from SessionRAG import add_to_rag
 
 from utils import create_session_directory
 
+from agents import generate_title
+
 app = FastAPI()
 state = init_agent(debug=True)
 
@@ -231,7 +233,43 @@ async def upload_file(file: UploadFile = File(...)):
     except Exception as e:
         print(f"Error uploading file: {e}")
         return {"status": "error", "message": str(e)}
+    
+@app.get("/get-chat-title/{session_id}")
+async def get_chat_title(session_id: str):
+    """
+    Retrieves the chat title for the given session ID.
+    """
+    from pathlib import Path
+    session_path = create_session_directory(session_id=session_id)
+    
+    # Check if session directory exists
+    if not Path(session_path).exists():
+        return {"status": "error", "message": "Session not found"}
 
+    # Read title from session metadata
+    title_file = Path(session_path) / "utils" / "title.txt"
+    if title_file.exists():
+        with open(title_file, "r") as f:
+            title = f.read().strip()
+        return {"status": "success", "title": title}
+    
+    else:
+        generated_title = generate_title(state["llm"], state["memory"])
+
+        if generated_title == "Skip":
+            return {"status": "success", "title": "New Chat"}
+        
+        print(f"Generated title: {generated_title}")  # Debug log
+        
+        # Ensure the utils directory exists
+        title_file.parent.mkdir(parents=True, exist_ok=True)
+        
+        with open(title_file, "w") as f:
+            f.write(generated_title)
+        print(f"Title saved to {title_file}")
+
+        return {"status": "success", "title": generated_title}
+    
 @app.post("/new-chat", response_model=ChatResponse)
 async def new_chat():
     """

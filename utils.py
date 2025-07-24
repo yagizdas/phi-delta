@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+
 from config import MAIN_PATH, SESSION_BASED_PATHING
 import os
 
@@ -57,4 +58,10 @@ def create_session_directory(session_id: str,
     
     return session_path
 
+def get_user_prompts(conversation: list[dict]) -> list[dict]:
+    """
+    Extracts user prompts from a conversation dictionary.
+    """
+    user_messages = [entry for entry in conversation if entry.get("role") == "user"]
 
+    return user_messages

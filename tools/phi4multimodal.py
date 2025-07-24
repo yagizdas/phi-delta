@@ -26,12 +26,16 @@ class Phi4MMTool(BaseTool):
         "Returns detailed answers or interpretations based on the visual input."
     )
     args_schema: Type[BaseModel] = ImageDescribeInput
+    
+    session_path: str = Field(default="", description="Path to the session directory")
+
+    def __init__(self, session_path: str = None, **kwargs):
+        super().__init__(session_path=session_path, **kwargs)
 
     def _run(self, question: str, image_path: str, already_encoded: bool = False, pdf_page: Optional[int] = None) -> str:
 
-        
-        image_path = MAIN_PATH + image_path 
-        
+        image_path = self.session_path + image_path
+
         if already_encoded:
             b64_image = image_path  # assume already encoded string
         else:

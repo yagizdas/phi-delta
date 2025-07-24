@@ -103,18 +103,33 @@ class SessionManager:
                             with open(session_file, 'r', encoding='utf-8') as f:
                                 session_data = json.load(f)
                             
-                            # Extract a title from the first user message if available
-
-                            # TODO: Change here with AI generated titles
-                            memory_data = session_data.get("memory", {})
-                            chat_history = memory_data.get("chat_history", [])
-                            title = "New Chat"
+                            # Check for AI generated title first
+                            session_id = session_data["session_id"]
+                            session_path = session_data.get("session_path", file.parent)
+                            title_file = Path(session_path) / "utils" / "title.txt"
                             
-                            for msg in chat_history:
-                                if msg.get("role") == "user":
-                                    content = msg.get("content", "")
-                                    title = content[:50] + "..." if len(content) > 50 else content
-                                    break
+                            title = "New Chat"  # Default title
+                            
+                            # Try to read generated title first
+                            if title_file.exists():
+                                try:
+                                    with open(title_file, 'r', encoding='utf-8') as tf:
+                                        generated_title = tf.read().strip()
+                                        if generated_title:
+                                            title = generated_title
+                                except Exception as e:
+                                    print(f"Error reading title file {title_file}: {e}")
+                            
+                            # If no generated title, fall back to first user message
+                            if title == "New Chat":
+                                memory_data = session_data.get("memory", {})
+                                chat_history = memory_data.get("chat_history", [])
+                                
+                                for msg in chat_history:
+                                    if msg.get("role") == "user":
+                                        content = msg.get("content", "")
+                                        title = content[:50] + "..." if len(content) > 50 else content
+                                        break
                             
                             sessions.append({
                                 "session_id": session_data["session_id"],

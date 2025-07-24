@@ -12,8 +12,9 @@ from .rewriter import run_rewriter
 from .search_summarizer import run_search_summarizer
 from .finalizer import run_finalizer
 from .RAG_Router import run_RAG_router
+from .title_writer import generate_title 
 
 __all__ = ["instance_agent","instance_llm" "run_critic", "run_evaluator",
            "run_planner", "run_quickresponse", "run_router", "run_summarizer", 
            "run agent", "run_humanizer","run_rewriter","run_search_summarizer",
-           "run_finalizer", "run_RAG_router"]
+           "run_finalizer", "run_RAG_router", "generate_title"]

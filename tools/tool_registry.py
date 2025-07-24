@@ -39,7 +39,7 @@ def initialize_tools(llm, memory : AgentMemory,
 
     code_tool = PythonREPLTool()
 
-    multimodal_tool = phi4multimodal.Phi4MMTool()
+    multimodal_tool = phi4multimodal.Phi4MMTool(session_path=session_path)
 
     arxiv_tool = Tool.from_function(
         name="arxiv_search",
