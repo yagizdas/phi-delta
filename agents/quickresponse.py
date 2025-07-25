@@ -10,11 +10,6 @@ def run_quickresponse(reasoning_llm, question: str, context: AgentMemory, retrie
     else:
         quickresponse_prompt = QUICKRESPONSE_PROMPT_TEMPLATE.format(context=context.chat_summary, retrieved_context=retrieved_context)
 
-    result = reasoning_llm.invoke([
+    for chunk in reasoning_llm.stream([{"role": "system", "content": quickresponse_prompt},{"role": "user", "content": f"{question}"}]):
+        yield chunk.content
 
-        {"role": "system", "content": quickresponse_prompt},
-        {"role": "user", "content": f"{question}"}
-
-    ])
-
-    return result.content

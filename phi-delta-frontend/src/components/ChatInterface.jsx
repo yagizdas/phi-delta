@@ -20,6 +20,7 @@ export default function ChatInterface() {
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState(null);
   const [isModelFilesBubbleOpen, setIsModelFilesBubbleOpen] = useState(false);
+  const [isStreamingActive, setIsStreamingActive] = useState(false); // New state to track streaming
   const containerRef = useRef(null);
   const fileInputRef = useRef(null);
   const currentThinkingStepsRef = useRef([]);
@@ -39,6 +40,12 @@ export default function ChatInterface() {
   // Fetch model files when currentSessionId changes
   useEffect(() => {
     const fetchModelFiles = async () => {
+      // Don't fetch model files while streaming is active
+      if (isStreamingActive) {
+        console.log('⏸️ Deferring model files fetch - streaming in progress');
+        return;
+      }
+      
       if (!currentSessionId) {
         console.log('⏳ No session ID available yet, skipping model files fetch');
         return;
@@ -67,16 +74,22 @@ export default function ChatInterface() {
     };
     
     if (currentSessionId) {
-      // Initial fetch
-      fetchModelFiles();
+      // Initial fetch (only if not streaming)
+      if (!isStreamingActive) {
+        fetchModelFiles();
+      }
       
-      // Set up polling every 5 seconds
-      const interval = setInterval(fetchModelFiles, 5000);
+      // Set up polling every 5 seconds (but skip during streaming)
+      const interval = setInterval(() => {
+        if (!isStreamingActive) {
+          fetchModelFiles();
+        }
+      }, 5000);
       
       // Cleanup interval on component unmount
       return () => clearInterval(interval);
     }
-  }, [currentSessionId]);
+  }, [currentSessionId, isStreamingActive]); // Added isStreamingActive dependency
 
 
     const handleNewChat = async () => {
@@ -98,6 +111,7 @@ export default function ChatInterface() {
     setInput('');
     setUploadedFiles([]);
     setIsThinking(false);
+    setIsStreamingActive(false); // Reset streaming state
     setThinkingSteps([]);
     currentThinkingStepsRef.current = [];
     setIsSidebarOpen(false);
@@ -186,6 +200,7 @@ export default function ChatInterface() {
         setInput('');
         setThinkingSteps([]);
         setIsThinking(false);
+        setIsStreamingActive(false); // Reset streaming state
         setUploadedFiles([]);
         currentThinkingStepsRef.current = [];
         
@@ -276,12 +291,18 @@ export default function ChatInterface() {
     setInput('');
     setUploadedFiles([]); // Clear uploaded files after sending
     setIsThinking(true);
+    setIsStreamingActive(false); // Reset streaming state
     setThinkingSteps([]);
     currentThinkingStepsRef.current = []; // Reset the ref for new request
 
     try {
       // Start polling for thinking steps
       const thinkingInterval = setInterval(async () => {
+        // Skip thinking steps polling during streaming
+        if (isStreamingActive) {
+          return;
+        }
+        
         try {
           const thinkingRes = await fetch('/api/get-chat-history');
           
@@ -304,6 +325,11 @@ export default function ChatInterface() {
 
       // Start polling for processing status
       const statusInterval = setInterval(async () => {
+        // Skip status polling during streaming
+        if (isStreamingActive) {
+          return;
+        }
+        
         try {
           const statusRes = await fetch('/api/get-processing-status');
           const status = await statusRes.json();
@@ -311,31 +337,109 @@ export default function ChatInterface() {
           console.log('Processing status:', status); // Debug log
           
           if (!status.is_processing && status.has_result) {
-            // Processing is complete, get the final result
-            const resultRes = await fetch('/api/get-final-result');
-            const resultData = await resultRes.json();
+            // Processing is complete, get the streaming final result
+            clearInterval(thinkingInterval);
+            clearInterval(statusInterval);
             
-            console.log('Final result data:', resultData); // Debug log
+            // Update thinking status to show we're finalizing
+            setThinkingSteps(prev => [...prev, {
+              step: prev.length + 1,
+              description: "Finalizing response..."
+            }]);
             
-            if (resultData.result) {
-              clearInterval(thinkingInterval);
-              clearInterval(statusInterval);
-              setIsThinking(false);
+            try {
+              const resultRes = await fetch('/api/get-final-result');
+              
+              // Check if it's a streaming response
+              const contentType = resultRes.headers.get('content-type');
+              
+              if (contentType && contentType.includes('text/plain')) {
+                // Handle streaming response from get-final-result
+                console.log('🚀 Starting final result streaming');
+                setIsStreamingActive(true); // Mark streaming as active
+                
+                const reader = resultRes.body.getReader();
+                const decoder = new TextDecoder();
+                
+                // Use the ref to get the most current thinking steps
+                const currentThinkingSteps = [...currentThinkingStepsRef.current];
+                
+                // Now hide thinking UI and add placeholder message
+                setIsThinking(false);
+                
+                // Add a placeholder message that will be updated with streaming content
+                const assistantMsgIndex = messages.length + 1; // +1 because we added user message
+                setMessages(prev => [...prev, { 
+                  role: 'assistant', 
+                  content: '',
+                  thinkingSteps: currentThinkingSteps.length > 0 ? currentThinkingSteps : null,
+                  thinkingDuration: currentThinkingSteps.length > 0 ? `${currentThinkingSteps.length} steps` : null
+                }]);
+                
+                let accumulatedContent = '';
+                
+                try {
+                  while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    const chunk = decoder.decode(value, { stream: true });
+                    accumulatedContent += chunk;
+                    
+                    // Update the assistant message in real-time
+                    setMessages(prev => prev.map((msg, idx) => 
+                      idx === assistantMsgIndex ? { ...msg, content: accumulatedContent } : msg
+                    ));
+                  }
+                  
+                  console.log('✅ Final result streaming completed');
+                  setIsStreamingActive(false); // Mark streaming as complete
+                  
+                } catch (streamError) {
+                  console.error('Streaming error:', streamError);
+                  setIsStreamingActive(false); // Mark streaming as complete even on error
+                  setMessages(prev => prev.map((msg, idx) => 
+                    idx === assistantMsgIndex ? { ...msg, content: accumulatedContent + '\n\n[Stream interrupted]' } : msg
+                  ));
+                }
+              } else {
+                // Fallback to JSON response (in case the endpoint changes back)
+                setIsThinking(false); // Hide thinking UI
+                
+                const resultData = await resultRes.json();
+                console.log('Final result data:', resultData); // Debug log
+                
+                if (resultData.result) {
+                  // Use the ref to get the most current thinking steps
+                  const currentThinkingSteps = [...currentThinkingStepsRef.current];
+                  
+                  // Create assistant message with the current thinking steps
+                  const assistantMsg = {
+                    role: 'assistant',
+                    content: resultData.result,
+                    thinkingSteps: currentThinkingSteps.length > 0 ? currentThinkingSteps : null,
+                    thinkingDuration: currentThinkingSteps.length > 0 ? `${currentThinkingSteps.length} steps` : null
+                  };
+                  
+                  setMessages(prev => [...prev, assistantMsg]);
+                }
+              }
+            } catch (resultError) {
+              console.error('Error fetching final result:', resultError);
+              setIsThinking(false); // Hide thinking UI on error
               
               // Use the ref to get the most current thinking steps
               const currentThinkingSteps = [...currentThinkingStepsRef.current];
               
-              // Create assistant message with the current thinking steps
-              const assistantMsg = {
+              const errorMsg = {
                 role: 'assistant',
-                content: resultData.result,
+                content: 'Sorry, there was an error retrieving the final result.',
                 thinkingSteps: currentThinkingSteps.length > 0 ? currentThinkingSteps : null,
                 thinkingDuration: currentThinkingSteps.length > 0 ? `${currentThinkingSteps.length} steps` : null
               };
-              
-              setMessages(prev => [...prev, assistantMsg]);
-              return;
+              setMessages(prev => [...prev, errorMsg]);
             }
+            return;
           }
         } catch (error) {
           console.error('Error checking processing status:', error);
@@ -348,19 +452,68 @@ export default function ChatInterface() {
         body: JSON.stringify({ message: messageContent }),
       });
       
-      const { reply } = await res.json();
+      // Check if response is streaming (text/plain) or JSON
+      const contentType = res.headers.get('content-type');
       
-      // If it's not agentic (immediate response), clear intervals and show result
-      if (!reply.includes('🔄 Processing')) {
+      if (contentType && contentType.includes('text/plain')) {
+        // Handle streaming response
+        console.log('🚀 Starting immediate streaming response');
+        setIsStreamingActive(true); // Mark streaming as active
+        
         clearInterval(thinkingInterval);
         clearInterval(statusInterval);
         setIsThinking(false);
-        setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
+        
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        
+        // Add a placeholder message that will be updated
+        const assistantMsgIndex = messages.length + 1; // +1 because we added user message
+        setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
+        
+        let accumulatedContent = '';
+        
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            const chunk = decoder.decode(value, { stream: true });
+            accumulatedContent += chunk;
+            
+            // Update the assistant message in real-time
+            setMessages(prev => prev.map((msg, idx) => 
+              idx === assistantMsgIndex ? { ...msg, content: accumulatedContent } : msg
+            ));
+          }
+          
+          console.log('✅ Immediate streaming completed');
+          setIsStreamingActive(false); // Mark streaming as complete
+          
+        } catch (streamError) {
+          console.error('Streaming error:', streamError);
+          setIsStreamingActive(false); // Mark streaming as complete even on error
+          setMessages(prev => prev.map((msg, idx) => 
+            idx === assistantMsgIndex ? { ...msg, content: accumulatedContent + '\n\n[Stream interrupted]' } : msg
+          ));
+        }
+      } else {
+        // Handle JSON response (for agentic tasks)
+        const { reply } = await res.json();
+        
+        // If it's not agentic (immediate response), clear intervals and show result
+        if (!reply.includes('🔄 Processing')) {
+          clearInterval(thinkingInterval);
+          clearInterval(statusInterval);
+          setIsThinking(false);
+          setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
+        }
+        // If it's agentic, the intervals will handle the final result
       }
-      // If it's agentic, the intervals will handle the final result
       
     } catch (error) {
       setIsThinking(false);
+      setIsStreamingActive(false); // Reset streaming state on error
       
       // Use the ref to get the most current thinking steps
       const currentThinkingSteps = [...currentThinkingStepsRef.current];
@@ -490,6 +643,12 @@ export default function ChatInterface() {
   const generateChatTitle = async (sessionId) => {
     if (!sessionId) return;
     
+    // Don't generate title while streaming is active
+    if (isStreamingActive) {
+      console.log('⏸️ Deferring title generation - streaming in progress');
+      return;
+    }
+    
     try {
       console.log('🏷️ Generating title for session:', sessionId);
       const response = await fetch(`/api/get-chat-title/${sessionId}`);
@@ -530,7 +689,8 @@ export default function ChatInterface() {
     // 1. Not currently thinking/processing
     // 2. Have messages in the conversation
     // 3. Have a current session
-    if (!isThinking && messages.length >= 2 && currentSessionId) {
+    // 4. Not currently streaming
+    if (!isThinking && !isStreamingActive && messages.length >= 2 && currentSessionId) {
       scheduleTitleGeneration();
     }
 
@@ -540,7 +700,7 @@ export default function ChatInterface() {
         clearTimeout(titleGenerationTimeoutRef.current);
       }
     };
-  }, [isThinking, messages.length, currentSessionId]);
+  }, [isThinking, isStreamingActive, messages.length, currentSessionId]); // Added isStreamingActive dependency
 
   // Clear title generation timeout when user starts typing
   const handleInputChange = (e) => {
@@ -1188,7 +1348,7 @@ export default function ChatInterface() {
                 ref={fileInputRef}
                 type="file"
                 multiple
-                accept=".pdf,.doc,.docx,.txt,.md"
+                accept=".pdf,.jpeg,.png,.docx"
                 onChange={handleFileUpload}
                 className="hidden"
               />

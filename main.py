@@ -84,7 +84,7 @@ def route_query(state: dict, question: str, debug: bool = False):
                        context=memory, retrieved_context=ctx, debug=debug),debug=debug)
     return route, ctx
 
-def get_reply(state: dict, question: str, route: str, ctx: str, debug: bool = False) -> str:
+def qr_get_reply(state: dict, question: str, route: str, ctx: str, debug: bool = False) -> str:
     memory        = state["memory"]
     llm           = state["llm"]
     session_id    = state["session_id"]
@@ -94,24 +94,12 @@ def get_reply(state: dict, question: str, route: str, ctx: str, debug: bool = Fa
 
     memory.add("user", question)
 
-    if route == "QuickResponse":
-        answer = run_quickresponse(llm, question, context=memory)
-
-    else:  
-        resp      = run_quickresponse(llm, question, context=memory,
-                                      retrieved_context=ctx, rag=True)
-        rag_route = run_RAG_router(llm, query=question, response=resp,
-                                   debug=debug).strip()
-        
-        decision = parse_router(rag_route, debug=debug)
-
-        print(f"RAG Route: {decision}")  # Debug log
-        if decision == "ESCALATE":
-            print("Escalating to agentic task...")  # Debug log
-            return True  # Indicates that the agentic task should be run
-        else:
-            answer = resp
-                        
+    answer = ""
+    
+    for token in run_quickresponse(llm, question, context=memory):
+        print(token, end="", flush=True)  # Stream the response, debug
+        answer += token  # Collect the response
+        yield token  # Stream the response
 
     # update summary
     memory.add("assistant", answer)
@@ -122,6 +110,50 @@ def get_reply(state: dict, question: str, route: str, ctx: str, debug: bool = Fa
         session_manager.save_session(session_id=session_id, session_path=session_path, memory=memory)
         if debug: print(f"Session {session_id} saved")
     
+    return answer
+
+def rag_decide(state: dict, question: str, ctx: str, debug: bool = False):
+    memory        = state["memory"]
+    llm           = state["llm"]
+
+    memory.add("user", question)
+
+    resp      = run_quickresponse(llm, question, context=memory,
+                                      retrieved_context=ctx, rag=True)
+    rag_route = run_RAG_router(llm, query=question, response=resp,
+                                   debug=debug).strip()
+    decision = parse_router(rag_route, debug=debug)
+
+    print(f"RAG Route: {decision}")  # Debug log
+    
+    if decision == "ESCALATE":
+        print("Escalating to agentic task...")  # Debug log
+        return True  # Indicates that the agentic task should be run
+    
+    return False
+
+def rag_get_reply(state: dict, question: str, route: str, ctx: str, debug: bool = False):
+    memory        = state["memory"]
+    llm           = state["llm"]
+    session_id    = state["session_id"]
+    session_path  = state["session_path"]
+
+    answer = ""
+
+    for token in run_quickresponse(llm, question, context=memory, retrieved_context=ctx, rag=True):
+        print(token, end="", flush=True)  # Stream the response, debug
+        answer += token  # Collect the response
+        yield token  # Stream the response
+
+    # update summary
+    memory.add("assistant", answer)
+    memory.chat_summary = run_summarizer(reasoning_llm=llm, memory=memory)
+
+    # Save session after each interaction
+    if session_id:
+        session_manager.save_session(session_id=session_id, session_path=session_path, memory=memory)
+        if debug: print(f"Session {session_id} saved")
+
     return answer
 
 def run_agentic_task(state, question, rag = False, debug=False):
@@ -228,7 +260,7 @@ def main(debug: bool = False):
             print(f"Response: {processing_state['result']}")
         
         else:
-            answer = get_reply(state, q, route, ctx, debug=False)
+            answer = qr_get_reply(state, q, route, ctx, debug=False)
             print(f"Response: {answer}")
 
 if __name__ == "__main__":

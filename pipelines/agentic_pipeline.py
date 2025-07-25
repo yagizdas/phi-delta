@@ -106,9 +106,5 @@ def agentic_behaviour(llm: ChatOpenAI,
         i += 1
         j += 1
 
-    finalized_answer = run_finalizer(llm,memory)
-    memory.chat_history_total.append({"role":"assistant","content":finalized_answer})
 
-    memory.thinkingsteps.clear()
-    
-    return finalized_answer
+    return "Done"

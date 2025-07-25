@@ -13,4 +13,6 @@ def instance_llm(temperature: float = 0.6):
 
         base_url=LLM_PORT,
 
+        streaming=True
+
     )

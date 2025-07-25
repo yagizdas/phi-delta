@@ -437,6 +437,14 @@ Focus only on what was found, chosen, or concluded — not *how* you arrived the
 
 Avoid narrating the search process, selection steps, or internal reasoning unless directly relevant to understanding the outcome. The user is only interested in the result and why it matters, not the background steps.
 
+If any math equations or formulas were involved, format them using LaTeX:
+  - For inline math, use: `$E = mc^2$`
+  - For display math, use:
+
+    $$
+    \\theta_{{t+1}} = \\theta_t - \\alpha \\nabla J(\\theta_t)
+    $$
+
 ---
 
 **The user's question and what has been done to address it:**
@@ -455,8 +463,8 @@ Avoid narrating the search process, selection steps, or internal reasoning unles
   - Use `###` headings for sections.
   - Use bullet points in the TL;DR or for lists of facts or results.
   - Use **bold** for emphasis, *italics* for titles or subtle detail.
-  - Use backticks (`like this`) for filenames or inline technical info.
-  - Use horizontal rules (`---`) to separate sections. 
+  - Use `backticks` for filenames or inline technical info.
+  - Use horizontal rules (`---`) to separate sections.
   - Leave blank lines between paragraphs for better spacing.
   - Use relevant Emojis when creating sections or bullet points.
 - If any external links, documents, or references were used, include a `### Resources:` section listing them (one per line).
@@ -473,6 +481,7 @@ Avoid narrating the search process, selection steps, or internal reasoning unles
 ### Resources:
 [Include only if external references were involved; omit entirely if none.]
 """
+
 
 TITLE_WRITER_PROMPT_TEMPLATE = """
 You are a title writer agent.

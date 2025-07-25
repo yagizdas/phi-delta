@@ -1,12 +1,14 @@
 from fastapi import FastAPI, UploadFile, File
 from pydantic import BaseModel
-from main import init_agent, get_reply, route_query, save_current_session, load_session_by_id, list_available_sessions, delete_session_by_id
+from main import init_agent, route_query, save_current_session, load_session_by_id, list_available_sessions, delete_session_by_id, rag_decide, qr_get_reply, rag_get_reply
 from fastapi import BackgroundTasks
 import asyncio
 import threading
 from session_manager import session_manager
 
-from pipelines import planner_behaviour, agentic_behaviour
+from fastapi.responses import StreamingResponse
+
+from pipelines import planner_behaviour, agentic_behaviour, finalizer_behaviour
 
 from SessionRAG import add_to_rag
 
@@ -146,12 +148,11 @@ async def get_processing_status():
 @app.get("/get-final-result")
 async def get_final_result():
     if processing_state["result"] is not None:
-        result = processing_state["result"]
-        print(f"Returning final result: {result[:100]}...")  # Debug log
-        # Clear the result after retrieving it
-        processing_state["result"] = None
-        processing_state["current_question"] = None
-        return {"result": result}
+
+        memory = state["memory"]
+        llm = state["llm"]
+        return StreamingResponse(finalizer_behaviour(llm, memory), media_type="text/plain")
+
     print("No result available yet")  # Debug log
     return {"result": None}
 
@@ -328,17 +329,22 @@ async def chat(req: ChatRequest, background_tasks: BackgroundTasks):
         
         return ChatResponse(reply="🔄 Processing your request... This may take a moment.")
     
-    else:
-        answer = get_reply(state, req.message, route, ctx, debug=False)
+    if route == "QuickResponse":
+
+        return StreamingResponse(qr_get_reply(state, req.message, route, ctx, debug=False), media_type="text/plain")
+    
+    if route == "RAG":
+        decision = rag_decide(state, req.message, ctx, debug=False)
 
         # Answer returns True if it indicates an agentic task should be run after RAG routing. This is handled in the main.py logic.
-        if answer == True:
+        if decision == True:
             print("RAG Agentic task triggered")
             background_tasks.add_task(run_agentic_task, state, req.message, True, True)  # Enable debug, RAG
-
+            
             print(state["memory"].chat_history)
 
             return ChatResponse(reply="🔄 Processing your request... This may take a moment.")
         
-        # Session is automatically saved in get_reply function
-        return ChatResponse(reply=answer)
+        else:
+            return StreamingResponse(rag_get_reply(state, req.message, route, ctx, debug=False), media_type="text/plain")
+        
