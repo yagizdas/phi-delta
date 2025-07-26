@@ -151,7 +151,10 @@ async def get_final_result():
 
         memory = state["memory"]
         llm = state["llm"]
-        return StreamingResponse(finalizer_behaviour(llm, memory), media_type="text/plain")
+        session_id = state["session_id"]
+        session_path = state["session_path"]
+        
+        return StreamingResponse(finalizer_behaviour(llm, memory, session_id, session_path), media_type="text/plain")
 
     print("No result available yet")  # Debug log
     return {"result": None}

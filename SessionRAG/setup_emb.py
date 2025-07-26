@@ -11,7 +11,7 @@ def download_embedder():
     """
     snapshot_download(
         repo_id=EMBEDDER_MODEL_NAME,
-        force_download=True
+        force_download=False
     )
 
 def setup_embedder():

@@ -325,6 +325,10 @@ You MUST choose exactly one of the following outcomes:
 
 **Decision: "Changed Steps"**
 - Use ONLY if the executor’s output was incorrect or suboptimal AND needs re-planning.
+- If the executor’s output was incorrect, incomplete, or produced no meaningful result (e.g., empty, "I don't know", "no relevant documents found") → Suggest "Changed Steps".
+  - If the current plan step used a file-dependent tool (e.g., `rag_search`, `list_directory_tool`) and yielded nothing, the new plan MUST switch to broader tools like `search_tool` or `arxiv_search` instead.
+  - Do NOT choose "BREAK" in such cases — only choose "BREAK" if the original user question truly depends on missing input (e.g., a specific file or clarification), not just an empty directory.
+- If the executor’s output was correct but the next steps need to be adjusted, provide a new plan.
 - Provide new next steps (omit completed and current step).
 
 **Decision: "BREAK"**
@@ -360,8 +364,6 @@ Available tools for the executor agent: {tools}
 The full plan steps are: {steps}
 """
 
-
-
 SUMMARIZER_PROMPT_EXAMPLE = """
     
     You are a summarizer agent. Your job is to create a concise but context-rich summary of the full conversation so far.
@@ -374,6 +376,32 @@ SUMMARIZER_PROMPT_EXAMPLE = """
     Do NOT repeat logs, metadata, or all tool outputs. Abstract what happened. Your goal is to compress the memory into ~300-500 tokens of useful continuity.
     
     """
+
+STEP_SUMMARIZER_PROMPT_EXAMPLE = """
+  You are a summarizer agent tasked with condensing the outcome of the current reasoning step in a multi-step agentic workflow.
+
+  Your goal is to produce a concise, context-rich summary (100-400 tokens) that captures:
+
+  - What this step attempted to achieve
+  - Key actions taken and tool results (titles, final outputs, important discoveries — not raw logs)
+  - Any decisions made, plans updated, or critical turning points
+
+  Avoid:
+  - Repeating full tool outputs or raw logs
+  - Generic restatements of the prompt
+  - Metadata or boilerplate
+
+  Focus on conveying only what’s essential for downstream steps to understand the reasoning trajectory so far.
+
+  DO NOT include any explanation or additional text. Only a summarization is needed.
+
+  The step you are summarizing is:
+  {step}
+
+  The answer to the step is:
+  {answer}
+  """
+
 
 HUMANIZER_PROMPT_TEMPLATE = """
 You are a humanizer agent.

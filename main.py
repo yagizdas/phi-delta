@@ -78,6 +78,8 @@ def route_query(state: dict, question: str, debug: bool = False):
     deterministic = state["deterministic"]
     vectorstore   = state["vectorstore"]
 
+    memory.add("user", question)
+
     rew_q = run_rewriter(reasoning_llm=llm, question=question)
     ctx   = similarity_search(vectorstore=vectorstore, query=rew_q, debug=debug)
     route = parse_router(run_router(reasoning_llm=deterministic, query=question,
@@ -91,8 +93,6 @@ def qr_get_reply(state: dict, question: str, route: str, ctx: str, debug: bool =
     session_path  = state["session_path"]
 
     if debug: print(f"\nQuestion: {question} | Routing: {route}\n")
-
-    memory.add("user", question)
 
     answer = ""
     
@@ -115,8 +115,6 @@ def qr_get_reply(state: dict, question: str, route: str, ctx: str, debug: bool =
 def rag_decide(state: dict, question: str, ctx: str, debug: bool = False):
     memory        = state["memory"]
     llm           = state["llm"]
-
-    memory.add("user", question)
 
     resp      = run_quickresponse(llm, question, context=memory,
                                       retrieved_context=ctx, rag=True)

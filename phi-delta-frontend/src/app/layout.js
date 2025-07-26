@@ -12,23 +12,23 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "phiDelta - AI Research Assistant",
+  title: "phiDelta",
   description: "Advanced AI-powered research and analysis platform",
   icons: {
     icon: [
       {
-        url: "/squarelogophidelta.png",
+        url: "/websiteicon.png",
         sizes: "32x32",
         type: "image/png",
       },
       {
-        url: "/squarelogophidelta.png", 
+        url: "/websiteicon.png", 
         sizes: "16x16",
         type: "image/png",
       }
     ],
     apple: {
-      url: "/squarelogophidelta.png",
+      url: "/websiteicon.png",
       sizes: "180x180",
       type: "image/png",
     },

@@ -10,11 +10,7 @@ def run_planner(reasoning_llm,
                 context: AgentMemory, 
                 rag: bool = False) -> str:
 
-    if rag: 
-        planner_prompt = RAG_PLANNER_PROMPT_TEMPLATE.format(context=context.chat_summary, tools=RAG_TOOL_DESCRIPTIONS)
-
-    else: 
-        planner_prompt = PLANNER_PROMPT_TEMPLATE.format(context=context.chat_summary, tools=TOOL_DESCRIPTIONS)
+    planner_prompt = PLANNER_PROMPT_TEMPLATE.format(context=context.chat_summary, tools=TOOL_DESCRIPTIONS)
 
     result = reasoning_llm.invoke([
 

@@ -13,9 +13,6 @@ def planner_behaviour(llm: ChatOpenAI,
     if debug:
         print("\n\nPlanner started with RAG mode: ", rag, "\n\n")
 
-    memory.chat_history.append({"role":"user","content":question})
-    memory.chat_history_total.append({"role":"user","content":question})
-
     if debug: print("\nplanner started\n")
 
     planner_answer = run_planner(reasoning_llm=llm, 

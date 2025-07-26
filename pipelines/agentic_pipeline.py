@@ -1,4 +1,4 @@
-from agents import run_agent, run_evaluator, run_humanizer, run_finalizer
+from agents import run_agent, run_evaluator, run_humanizer, run_finalizer, run_summarizer
 from parsers import parse_agent, parse_eval
 from langchain_openai import ChatOpenAI
 from memory.memory import AgentMemory
@@ -56,7 +56,10 @@ def agentic_behaviour(llm: ChatOpenAI,
         # print(f"\nFound Resources: {res}\n")
 
         # Since agent does not need all the summarized context, we only feed with the summary of the previous steps
-        step_by_step_context += f"{answer}\n\n"
+        step_by_step_context += run_summarizer(reasoning_llm=llm, memory=memory, step=plan[i], answer=answer)
+        
+        if len(step_by_step_context) > 1000:
+            step_by_step_context = step_by_step_context[-1000:]
 
         if log:
             print(f"\n\n {i}th Summary: ", summ, "\n\n")
@@ -77,11 +80,12 @@ def agentic_behaviour(llm: ChatOpenAI,
         parsed_eval = parse_eval(evaluation)
 
         print(parsed_eval)
+        print(type(parsed_eval))
 
         if parsed_eval == -1:
             break
                 
-        elif isinstance(parsed_eval, str):
+        elif isinstance(parsed_eval, list):
             
             i = 0
             j += 1  
