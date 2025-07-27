@@ -329,6 +329,10 @@ You MUST choose exactly one of the following outcomes:
   - If the current plan step used a file-dependent tool (e.g., `rag_search`, `list_directory_tool`) and yielded nothing, the new plan MUST switch to broader tools like `search_tool` or `arxiv_search` instead.
   - Do NOT choose "BREAK" in such cases — only choose "BREAK" if the original user question truly depends on missing input (e.g., a specific file or clarification), not just an empty directory.
 - If the executor’s output was correct but the next steps need to be adjusted, provide a new plan.
+- Special constraints for paper retrieval:
+  - ✅ If the original plan used `arxiv_search` and returned valid results, and the papers have NOT yet been downloaded, the plan MUST proceed directly to `download_tool` using the original paper indices.
+  - ❌ NEVER switch to `search_tool` in such cases — papers from `search_tool` cannot be downloaded.
+  - ✅ Only `arxiv_search` → `download_tool` is valid if the goal involves analyzing or downloading PDFs.
 - Provide new next steps (omit completed and current step).
 
 **Decision: "BREAK"**
@@ -371,7 +375,6 @@ SUMMARIZER_PROMPT_EXAMPLE = """
     - The user’s goals and key questions
     - Critical results from tools (e.g. titles, conclusions)
     - Decisions made, paths taken
-    - Current task status
 
     Do NOT repeat logs, metadata, or all tool outputs. Abstract what happened. Your goal is to compress the memory into ~300-500 tokens of useful continuity.
     
@@ -465,12 +468,12 @@ Focus only on what was found, chosen, or concluded — not *how* you arrived the
 
 Avoid narrating the search process, selection steps, or internal reasoning unless directly relevant to understanding the outcome. The user is only interested in the result and why it matters, not the background steps.
 
-If any math equations or formulas were involved, format them using LaTeX:
+If any math equations or formulas were used, include them using proper LaTeX formatting:
   - For inline math, use: `$E = mc^2$`
-  - For display math, use:
+  - For block math, use:
 
     $$
-    \\theta_{{t+1}} = \\theta_t - \\alpha \\nabla J(\\theta_t)
+    \\eta = 1 - \\frac{{T_c}}{{T_h}}
     $$
 
 ---

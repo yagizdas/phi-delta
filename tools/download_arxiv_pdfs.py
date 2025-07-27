@@ -4,14 +4,15 @@ from typing import List, Tuple
 from config import MAIN_PATH
 import ast
 import re 
+from SessionRAG import add_to_rag
 
-def bound_download_tool(input_indices_str, links, session_path: str = MAIN_PATH) -> Tuple[str, List[str]]:
+def bound_download_tool(input_indices_str, links, vectorstore, session_path: str = MAIN_PATH) -> Tuple[str, List[str]]:
     print(f"\n\n\n\n\n\nDownload tool invoked, Input indices string: {input_indices_str}\n\n\n\n\n")
     input_indices = ast.literal_eval(input_indices_str)  # Converts "[1, 2]" -> [1, 2]
-    return download_arxiv_pdfs(input_indices, links, save_directory=session_path)
+    return download_arxiv_pdfs(input_indices, links, vectorstore, save_directory=session_path)
 
-def download_arxiv_pdfs(choices: List[int], links: List[str], save_directory: str = MAIN_PATH) -> Tuple[str, List[str]]:
-    
+def download_arxiv_pdfs(choices: List[int], links: List[str], vectorstore, save_directory: str = MAIN_PATH) -> Tuple[str, List[str]]:
+
     print(f"Choices: {choices}")
     print(f"Links: {links}")
     print(f"Save directory: {save_directory}")
@@ -52,6 +53,11 @@ def download_arxiv_pdfs(choices: List[int], links: List[str], save_directory: st
                 f.write(response.content)
             print(f"✅ Downloaded to: {filepath}")
             downloaded_file_paths.append(str(filepath))
+            # Add to RAG
+            print(f"✅ Adding {filepath} to RAG at {save_directory}")
+            add_to_rag(vectorstore=vectorstore, session_path=save_directory)
+
+
         except Exception as e:
             print(f"❌ Failed to download {pdf_url}: {e}")
 

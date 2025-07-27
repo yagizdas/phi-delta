@@ -53,10 +53,13 @@ def agentic_behaviour(llm: ChatOpenAI,
 
         print("Resources: ",res)
 
+        summary = run_summarizer(reasoning_llm=llm, memory=memory, step=plan[i], answer=answer)
+
+        print(f"\n\n {i}th run_summarizer Summary: ", summary, "\n\n")
         # print(f"\nFound Resources: {res}\n")
 
         # Since agent does not need all the summarized context, we only feed with the summary of the previous steps
-        step_by_step_context += run_summarizer(reasoning_llm=llm, memory=memory, step=plan[i], answer=answer)
+        step_by_step_context += summary
         
         if len(step_by_step_context) > 1000:
             step_by_step_context = step_by_step_context[-1000:]
@@ -68,7 +71,7 @@ def agentic_behaviour(llm: ChatOpenAI,
         memory.chat_history.append({"role":"system","content": answer})
 
         evaluation = run_evaluator(reasoning_llm=llm, 
-                                   action=answer, 
+                                   action=summ, 
                                    step=plan[i], 
                                    steps=plan, 
                                    question=question,

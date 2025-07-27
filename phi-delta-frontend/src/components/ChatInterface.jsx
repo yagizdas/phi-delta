@@ -829,12 +829,10 @@ export default function ChatInterface() {
             onClick={() => setIsSidebarOpen(true)}
             className="fixed top-2 left-4 z-30 bg-slate-800/80 backdrop-blur-sm border border-slate-700/50 text-slate-300 hover:text-slate-100 hover:bg-slate-700/80 hover:scale-105 p-3 rounded-lg transition-all duration-200 shadow-lg cursor-pointer group"
           >
-            {/* Glyph-only logo for sidebar toggle */}
-            <img
-              src="/squarelogophidelta.png"
-              alt="phiDelta"
-              className="w-6 h-6 object-contain transition-transform duration-200 group-hover:rotate-12"
-            />
+            {/* Three-line hamburger menu icon */}
+            <svg className="w-6 h-6 transition-transform duration-200 group-hover:scale-110" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+            </svg>
           </button>
         )}
 
@@ -974,10 +972,16 @@ export default function ChatInterface() {
         <header className="sticky top-0 z-20 bg-slate-900/80 backdrop-blur-md border-b border-slate-700/50">
           <div className="max-w-6xl mx-auto px-6 py-4">
             <div className="flex items-center justify-center">
-              {/* Centered logo */}
-              <div className="flex items-center gap-1 hover:scale-105 transition-transform duration-200">
+              {/* Centered logo with icon */}
+              <div className="flex items-center gap-0.5 hover:scale-105 transition-transform duration-200">
+                {/* Logo icon */}
+                <img
+                  src="/squarelogophidelta.png"
+                  alt="phiDelta"
+                  className="w-9 h-9 object-contain"
+                />
                 {/* Word-mark - responsive */}
-                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-100 cursor-pointer">
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-100 cursor-pointer mb-1">
                   <span className="text-slate-300">phi</span>
                   <span className="bg-gradient-to-r from-emerald-400 to-cyan-500 bg-clip-text text-transparent">
                     Delta
@@ -1106,10 +1110,10 @@ export default function ChatInterface() {
             messages.map((msg, idx) => (
               <div
                 key={idx}
-                className={`max-w-3xl mx-auto p-5 rounded-2xl transition-all duration-200 break-words overflow-wrap-anywhere ${
+                className={`max-w-3xl mx-auto p-6 rounded-2xl transition-all duration-200 break-words overflow-wrap-anywhere ${
                   msg.role === 'user' 
                     ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white ml-auto max-w-2xl shadow-lg shadow-emerald-900/20' 
-                    : 'bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 text-slate-100 shadow-xl shadow-slate-900/30'
+                    : 'bg-slate-800/40 backdrop-blur-sm border border-slate-700/30 text-slate-50 shadow-xl shadow-slate-900/20 hover:bg-slate-800/50 transition-colors duration-300'
                 }`}
               >
 
@@ -1148,14 +1152,15 @@ export default function ChatInterface() {
 
                 {/* Show phiDelta indicator for assistant messages - moved below thinking steps */}
                 {msg.role === 'assistant' && (
-                  <div className="flex items-center mb-3 text-emerald-400 text-sm font-medium">
-                    <div className="animate-pulse">
-                    <img
-                      src="/squaregreenlogophidelta.png"
-                      alt="phiDelta"
-                      className="w-4 h-4 object-contain mr-1 opacity-80"
-                    /></div>
-                    phiDelta
+                  <div className="flex items-center mb-4 pb-3 border-b border-slate-600/30">
+                    <div className="flex items-center space-x-2">
+                      <img
+                        src="/squaregreenlogophidelta.png"
+                        alt="phiDelta"
+                        className="w-5 h-5 object-contain opacity-90"
+                      />
+                      <span className="text-emerald-400 text-sm font-semibold tracking-wide">phiDelta</span>
+                    </div>
                   </div>
                 )}
                 
@@ -1192,16 +1197,35 @@ export default function ChatInterface() {
                   remarkPlugins={[remarkGfm, remarkMath]}
                   rehypePlugins={[rehypeKatex]}
                   components={{
-                    div: ({node, ...props}) => <div className={`prose prose-sm max-w-none break-words leading-loose ${
+                    div: ({node, ...props}) => <div className={`prose prose-lg max-w-none break-words ${
                       msg.role === 'user' ? 'prose-invert' : 'prose-slate prose-invert'
                     }`} {...props} />,
-                    p: ({node, ...props}) => <p className="whitespace-pre-line break-words leading-loose mb-6" {...props} />,
-                    // Handle long URLs and filenames in text
-                    text: ({node, ...props}) => <span className="break-all leading-loose" {...props} />,
-                    // Add spacing to lists
-                    ul: ({node, ...props}) => <ul className="space-y-2 my-4" {...props} />,
-                    ol: ({node, ...props}) => <ol className="space-y-2 my-4" {...props} />,
-                    li: ({node, ...props}) => <li className="leading-loose" {...props} />
+                    p: ({node, ...props}) => <p className="whitespace-pre-line break-words leading-relaxed mb-5 text-slate-100 text-base" {...props} />,
+                    text: ({node, ...props}) => <span className="break-words leading-relaxed text-slate-100" {...props} />,
+                    ul: ({node, ...props}) => <ul className="space-y-3 my-5 pl-6 list-disc marker:text-emerald-400" {...props} />,
+                    ol: ({node, ...props}) => <ol className="space-y-3 my-5 pl-6 list-decimal marker:text-emerald-400" {...props} />,
+                    li: ({node, ...props}) => <li className="leading-relaxed text-slate-100 pl-2 text-base" {...props} />,
+                    h1: ({node, ...props}) => <h1 className="text-2xl font-bold text-slate-50 mb-4 mt-6 border-b border-slate-600/50 pb-3" {...props} />,
+                    h2: ({node, ...props}) => <h2 className="text-xl font-semibold text-slate-100 mb-4 mt-6" {...props} />,
+                    h3: ({node, ...props}) => <h3 className="text-lg font-medium text-slate-200 mb-3 mt-5" {...props} />,
+                    h4: ({node, ...props}) => <h4 className="text-base font-medium text-slate-200 mb-3 mt-4" {...props} />,
+                    h5: ({node, ...props}) => <h5 className="text-sm font-medium text-slate-300 mb-2 mt-3" {...props} />,
+                    h6: ({node, ...props}) => <h6 className="text-sm font-medium text-slate-300 mb-2 mt-3" {...props} />,
+                    strong: ({node, ...props}) => <strong className="font-semibold text-slate-50" {...props} />,
+                    em: ({node, ...props}) => <em className="italic text-slate-200" {...props} />,
+                    blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-emerald-400/70 pl-4 py-3 my-5 bg-slate-700/30 rounded-r-lg text-slate-200 italic" {...props} />,
+                    code: ({node, inline, ...props}) => 
+                      inline ? 
+                        <code className="bg-slate-700/60 text-emerald-300 px-2 py-1 rounded text-sm font-mono border border-slate-600/30" {...props} /> :
+                        <code className="block bg-slate-900/60 text-slate-200 p-4 rounded-lg overflow-x-auto my-5 text-sm font-mono border border-slate-600/40 leading-relaxed" {...props} />,
+                    pre: ({node, ...props}) => <pre className="bg-slate-900/60 text-slate-200 p-4 rounded-lg overflow-x-auto my-5 border border-slate-600/40" {...props} />,
+                    table: ({node, ...props}) => <table className="min-w-full divide-y divide-slate-600 my-5 border border-slate-600/40 rounded-lg overflow-hidden" {...props} />,
+                    thead: ({node, ...props}) => <thead className="bg-slate-700/50" {...props} />,
+                    tbody: ({node, ...props}) => <tbody className="bg-slate-800/20 divide-y divide-slate-600" {...props} />,
+                    tr: ({node, ...props}) => <tr className="hover:bg-slate-700/30 transition-colors" {...props} />,
+                    th: ({node, ...props}) => <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider" {...props} />,
+                    td: ({node, ...props}) => <td className="px-4 py-3 text-sm text-slate-200" {...props} />,
+                    a: ({node, ...props}) => <a className="text-emerald-400 hover:text-emerald-300 underline transition-colors font-medium" {...props} />
                   }}
                 >
                   {msg.content}
