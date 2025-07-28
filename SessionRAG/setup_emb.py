@@ -6,8 +6,7 @@ _embedder_cache = None
 
 def download_embedder():
     """
-    Downloads the sentence-transformers/all-MiniLM-L6-v2 model from Hugging Face.
-    This model is used for generating embeddings in the SessionRAG framework.
+    Downloads the specified embedding model from Hugging Face. Can be changed in config.py.
     """
     snapshot_download(
         repo_id=EMBEDDER_MODEL_NAME,
@@ -16,7 +15,9 @@ def download_embedder():
 
 def setup_embedder():
     """
-    Sets up the RAG (Retrieval-Augmented Generation) environment by downloading necessary models.
+    Sets up the RAG (Retrieval-Augmented Generation) environment by downloading the embedding model if not already cached.
+    Returns:
+        HuggingFaceEmbeddings: The initialized embedding model.
     """
     global _embedder_cache
     
@@ -40,4 +41,3 @@ def reset_embedder():
     """
     global _embedder_cache
     _embedder_cache = None
-    print("Embedder cache reset.")

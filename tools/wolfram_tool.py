@@ -1,7 +1,7 @@
 import wolframalpha, httpx, xmltodict
 
-#wolfram tool had problems with async Client.aquery
-# so we monkey-patched it to use httpx.AsyncClient instead
+# wolfram tool had problems with async Client.aquery so we monkey-patched it to use httpx.AsyncClient instead
+# BEWARE: totally AI generated function.
 async def tolerant_aquery(self, input, params=(), **kw):
     """Replacement for Client.aquery
        • ignores obsolete Content-Type assert
@@ -30,7 +30,12 @@ from langchain_community.utilities import WolframAlphaAPIWrapper
 from pd_secrets import WOLFRAM_ALPHA_APPID
 
 def run_wolfram_alpha_query(query:str):
-
+    """Runs a Wolfram Alpha query using the provided query string.
+    Args:
+        query (str): The query string to send to Wolfram Alpha.
+    Returns:
+        str: The response from Wolfram Alpha.
+    """
     wolframalpha.Client.aquery = tolerant_aquery
 
     api = WolframAlphaAPIWrapper(wolfram_alpha_appid=WOLFRAM_ALPHA_APPID)

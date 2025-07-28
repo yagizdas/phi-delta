@@ -1,13 +1,4 @@
-
-import re
-
-def parse_tool_descriptions(tool_str):
-    tool_dict = {}
-    # Match lines like '1. search_tool: description...'
-    tool_blocks = re.findall(r"\d+\.\s+(\w+_\w+):(.+?)(?=\n\d+\.|\Z)", tool_str, re.DOTALL)
-    for tool, desc in tool_blocks:
-        tool_dict[tool.strip()] = desc.strip().replace('\n', ' ')
-    return tool_dict
+# config.py
 
 TOOL_DESCRIPTIONS = """
 You have access to the following tools:

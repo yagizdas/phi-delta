@@ -1,6 +1,16 @@
 from config import MAIN_PATH
 
 def list_directory(filetype: str = None, session_path: str = None) -> list[str]:
+    """
+    Agentic tool for listing files in a directory.
+    Lists files in the specified directory, optionally filtering by file extension.
+    If no filetype is specified, lists all files.
+    Args:
+        filetype (str): Optional file extension to filter files (e.g., 'pdf').
+        session_path (str): Path to the directory to list files from.
+    Returns:
+        list[str]: Sorted list of file names in the directory.
+    """
     import os
 
     try:

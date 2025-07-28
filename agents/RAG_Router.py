@@ -5,7 +5,16 @@ from prompts import RAG_ROUTER_PROMPT_TEMPLATE
 from memory.memory import AgentMemory
 
 def run_RAG_router(reasoning_llm, query: str, response: str = "", debug: bool = False) -> str:
-
+    """
+    Routes the query to the appropriate agent based on the context and response.
+    Args:
+        reasoning_llm: The language model to use for routing.
+        query (str): The query to be routed.
+        response (str): The response from the previous agent or context.
+        debug (bool): If True, enables debug mode for additional logging.
+    Returns:
+        str: The response from the routing agent.
+    """
     RAG_router_prompt = RAG_ROUTER_PROMPT_TEMPLATE.format(question=query, response=response)
     
     if debug:

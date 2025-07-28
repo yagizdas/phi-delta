@@ -21,12 +21,19 @@ def initialize_tools(llm, memory : AgentMemory,
     Initialize the tools used in the application.
     
     Args:
+        llm: The language model to use for summarization and other tasks.
         memory: An object that stores state, such as arxiv links.
+        vectorstore: The vector store for RAG (Retrieval-Augmented Generation).
+        session_path: The path to the session directory for file operations.
+        debug: If True, enables debug mode for additional logging.
     
     Returns:
         A list of initialized tools.
 
     """
+
+    # This function initializes various tools used in the application. Tools can easily be added or modified here.
+
     search_tool = Tool.from_function(
         name="search_tool",
         func=lambda search: search_and_summarize(llm, search),

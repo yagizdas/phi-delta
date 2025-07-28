@@ -9,7 +9,17 @@ def planner_behaviour(llm: ChatOpenAI,
                       memory: AgentMemory,
                       rag: bool = False,
                       debug: bool = False) -> List[str]:
-
+    """
+    Executes the planner agent to generate a plan based on the provided question and memory.
+    Args:
+        llm: The language model to use for planning.
+        question (str): The question to plan for.
+        memory: An object that stores state, such as chat history and thinking steps.
+        rag (bool): If True, enables RAG (Retrieval-Augmented Generation) mode.
+        debug (bool): If True, enables debug mode for additional logging.
+    Returns:
+        List[str]: A list of strings representing the parsed plan from the critic agent.
+    """
     if debug:
         print("\n\nPlanner started with RAG mode: ", rag, "\n\n")
 

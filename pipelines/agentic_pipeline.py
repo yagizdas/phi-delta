@@ -11,6 +11,19 @@ def agentic_behaviour(llm: ChatOpenAI,
                       memory: AgentMemory,
                       rag: bool = False, 
                       log: bool = False) -> list:
+    """
+    Executes the agentic behaviour by running the agent through a series of steps.
+    Args:
+        llm: The language model to use for reasoning and summarization.
+        agent: The agent to run through the steps.
+        plan (List[str]): A list of steps to execute.
+        question (str): The question to answer.
+        memory: An object that stores state, such as chat history and thinking steps.
+        rag (bool): If True, enables RAG (Retrieval-Augmented Generation) mode.
+        log (bool): If True, enables logging for debugging purposes.
+    Returns:
+        str: A message indicating the completion of the agentic behaviour.
+    """
 
     i,j = 0,1
     

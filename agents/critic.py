@@ -6,7 +6,15 @@ from prompts import CRITIC_PROMPT_TEMPLATE
 def run_critic(reasoning_llm, 
                planner_response: str, 
                rag: bool = False) -> str:
-
+    """
+    Evaluates the planner's response and provides feedback or suggestions.
+    Args:
+        reasoning_llm: The language model to use for evaluation.
+        planner_response (str): The response from the planner agent to be evaluated.
+        rag (bool): If True, enables RAG (Retrieval-Augmented Generation) mode.
+    Returns:
+        str: The evaluation or feedback from the critic agent.
+    """
     if rag: 
         critic_prompt = CRITIC_PROMPT_TEMPLATE.format(tools=RAG_TOOL_DESCRIPTIONS)
 

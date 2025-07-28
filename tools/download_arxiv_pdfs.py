@@ -7,12 +7,24 @@ import re
 from SessionRAG import add_to_rag
 
 def bound_download_tool(input_indices_str, links, vectorstore, session_path: str = MAIN_PATH) -> Tuple[str, List[str]]:
+    """
+    Wrapper function for the download tool for agent use.
+    Accepts a string of indices, converts it to a list, and calls the download function.
+    """
     print(f"\n\n\n\n\n\nDownload tool invoked, Input indices string: {input_indices_str}\n\n\n\n\n")
     input_indices = ast.literal_eval(input_indices_str)  # Converts "[1, 2]" -> [1, 2]
     return download_arxiv_pdfs(input_indices, links, vectorstore, save_directory=session_path)
 
 def download_arxiv_pdfs(choices: List[int], links: List[str], vectorstore, save_directory: str = MAIN_PATH) -> Tuple[str, List[str]]:
-
+    """Downloads PDFs from ArXiv based on user choices and saves them to a specified directory.
+    Args:
+        choices (List[int]): List of indices of papers to download.
+        links (List[str]): List of tuples containing paper links and titles.
+        vectorstore: Vector store for RAG.
+        save_directory (str): Directory where PDFs will be saved.
+    Returns:
+        Tuple[str, List[str]]: Summary message and list of downloaded file paths.
+    """
     print(f"Choices: {choices}")
     print(f"Links: {links}")
     print(f"Save directory: {save_directory}")

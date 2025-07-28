@@ -19,13 +19,23 @@ from utils import create_session_id, create_session_directory
 ADDED_FILES = "added_files.txt"
 
 def init_rag(embedding = None, session_id = None) -> tuple:
-
+    """
+    Initializes the RAG system with a vector store and embeddings.
+    If no embedding is provided, it initializes a new HuggingFace embedding model.
+    If no session_id is provided, it creates a new session ID and directory, NOT recommended.
+    Args:
+        embedding: Optional, a pre-initialized embedding model.
+        session_id: Optional, a pre-defined session ID.
+    Returns:
+        tuple: A tuple containing the vector store and embeddings.
+    """
     if embedding is None:
         print("Initializing the embedder...")
         embeddings = setup_embedder()
     else:
         embeddings = embedding
 
+    # Chroma vectorstore alternative is used, replacing FAISS
     """
     # Get embedding dimension from dummy query
     dim = len(embeddings.embed_query("dummy"))
@@ -50,7 +60,7 @@ def init_rag(embedding = None, session_id = None) -> tuple:
 
     persist_directory = f"./{session_path}/utils/chroma_db"
 
-    # Chroma vectorstore alternative
+    # Chroma vectorstore alternative initialization
     chroma_vectorstore = Chroma(
         collection_name=f"chat_{session_id}",
         embedding_function=embeddings,
@@ -69,10 +79,15 @@ def init_rag(embedding = None, session_id = None) -> tuple:
 
 def add_to_rag(vectorstore, 
                session_path: str,
-               pdfs_path: str = MAIN_PATH, 
                debug: bool = False) -> None:
     """
     Adds new documents to the existing FAISS vector store.
+    Args:
+        vectorstore: The vector store to add documents to.
+        session_path: The path to the session directory containing PDF files.
+        debug: If True, enables debug mode for additional logging.
+    Returns:
+        None
     """
     files = os.listdir(session_path)
 
@@ -118,7 +133,15 @@ def similarity_search(vectorstore,
                       k: int = 4,
                       debug: bool = False) -> str:
     """
-    Performs a similarity search on the vector store.
+    Performs a similarity search on the specified vector store.
+    Args:
+        vectorstore: The vector store to search in.
+        query (str): The query string to search for.
+        target (str): Optional, a specific document to filter results by.
+        k (int): The number of results to return. Default is 4.
+        debug (bool): If True, enables debug mode for additional logging.
+    Returns:
+        str: A shortened response based on the search results. 
     """
     if not query: 
         return "❌ ERROR: Query cannot be empty."
@@ -156,6 +179,10 @@ def similarity_search(vectorstore,
 def reset_rag(vectorstore) -> None:
     """
     Resets the RAG system by clearing the vector store.
+    Args:
+        vectorstore: The vector store to reset.
+    Returns:
+        None
     """
     try:
         # Delete the collection if it exists

@@ -19,6 +19,7 @@ def init_agent(passed_state=None, session_id=None, session_path=None, debug: boo
     Args:
         passed_state: Optional existing state to continue from
         session_id: Optional session ID to load from disk
+        session_path: Optional path to the session directory
         debug (bool): Flag to enable debug mode.
     Returns:
         dict: A dictionary containing initialized components.

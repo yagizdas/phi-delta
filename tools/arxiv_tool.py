@@ -70,6 +70,11 @@ def search_arxiv_details(query: str, memory, max_results: int = 3, ) -> str:
 
 
 def search_arxiv_tool_input(input_data: str, memory: AgentMemory, debug: bool = False) -> str:
+    """
+    Parses the input data for a search query and max results, then performs an ArXiv
+    search using the provided memory.
+    Returns the search results as a formatted string.
+    """
     query = ""
     max_results = 3  # default fallback
 

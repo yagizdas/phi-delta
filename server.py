@@ -2,18 +2,11 @@ from fastapi import FastAPI, UploadFile, File
 from pydantic import BaseModel
 from main import init_agent, route_query, save_current_session, load_session_by_id, list_available_sessions, delete_session_by_id, rag_decide, qr_get_reply, rag_get_reply
 from fastapi import BackgroundTasks
-import asyncio
-import threading
 from session_manager import session_manager
-
 from fastapi.responses import StreamingResponse
-
 from pipelines import planner_behaviour, agentic_behaviour, finalizer_behaviour
-
 from SessionRAG import add_to_rag
-
 from utils import create_session_directory
-
 from agents import generate_title
 
 app = FastAPI()
@@ -27,6 +20,14 @@ processing_state = {
 }
 
 def run_agentic_task(state, question, rag = False, debug=False):
+    """
+    Runs the agentic task in a separate thread to avoid blocking the main thread.
+    Args:
+        state: The current state of the application.
+        question (str): The question to process.
+        rag (bool): If True, enables RAG mode.
+        debug (bool): If True, enables debug logging.
+    """
     global processing_state
     processing_state["is_processing"] = True
     processing_state["current_question"] = question

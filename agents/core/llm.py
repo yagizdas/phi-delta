@@ -3,8 +3,13 @@ from config import LLM_PORT, MODEL_NAME
 
 
 def instance_llm(temperature: float = 0.6):
-    """Create an instance of the LLM with the specified model and temperature."""
-
+    """
+    Creates an instance of the language model with the specified temperature.
+    Args:
+        temperature (float): The temperature for the language model, controlling randomness.
+    Returns:
+        ChatOpenAI: An instance of the ChatOpenAI model configured with the specified temperature and other settings.
+    """
     return ChatOpenAI(
 
         model=MODEL_NAME,

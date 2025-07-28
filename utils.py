@@ -1,8 +1,16 @@
 import uuid
 from datetime import datetime
-
 from config import MAIN_PATH, SESSION_BASED_PATHING
 import os
+import re 
+
+def parse_tool_descriptions(tool_str):
+    tool_dict = {}
+    # Match lines like '1. search_tool: description...'
+    tool_blocks = re.findall(r"\d+\.\s+(\w+_\w+):(.+?)(?=\n\d+\.|\Z)", tool_str, re.DOTALL)
+    for tool, desc in tool_blocks:
+        tool_dict[tool.strip()] = desc.strip().replace('\n', ' ')
+    return tool_dict
 
 def extract_tool_names(conversation:dict) -> list[str]:
     """
