@@ -31,7 +31,10 @@ A modern, agentic, local-first research assistant platform with LLM reasoning, d
   Maintains conversation history, summarizes past interactions, and routes queries through QuickResponse vs. Agentic pipelines.
 - **🖥️ Next.js Frontend:**  
   Fully-featured modern UI for chat and file exploration.
-
+  
+## Quickstart
+- Will be implemented soon.
+- You can email me for any inquiries for this project at kyd.kemalyagiz@gmail.com
 ---
 
 ## 📦 Project Structure
@@ -47,7 +50,7 @@ phi-delta/
 ├── model_files/            # Directory for local model files
 ├── sessions/               # Session data storage
 ├── added_files.txt         # Tracks added/processed files
-├── tests/                  # Backend tests
+├── tests/                  # Backend tests (TODO)
 └── ...
 ```
 
