@@ -2,6 +2,8 @@
 
 A modern, agentic, local-first research assistant platform with LLM reasoning, document analysis, and an integrated Next.js frontend.
 
+<img width="2559" height="1439" alt="phideltastartpage" src="https://github.com/user-attachments/assets/8c97630d-7e49-437a-991b-c6e72075e560" />
+
 ---
 
 ## 🚀 Overview
@@ -51,42 +53,6 @@ phi-delta/
 
 ---
 
-## ⚡ Quickstart
-
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/yagizdas/phi-delta.git
-cd phi-delta
-```
-
-### 2. Setup Backend
-
-Install Python dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-Place your LLM files in `./model_files/` (adjust `MODEL_NAME` in `config.py` if needed).
-
-Run the backend (CLI):
-
-```bash
-python main.py
-```
-
-### 3. Setup Frontend
-
-```bash
-cd phi-delta-frontend
-npm install
-npm run dev
-```
-Then visit [http://localhost:3000](http://localhost:3000).
-
----
-
 ## 🛠️ Usage
 
 - Interact with the agent through the CLI (`main.py`) or via the web UI.
@@ -114,15 +80,10 @@ The system supports extensible "tools" for:
 - Multimodal (image) processing
 - Local file management and retrieval
 
-New tools can be added for further extensibility!
+New tools can be added for further extensibility! Feel free to contribute.
 
 ---
 
-## 🧪 Testing
-
-Tests for backend logic are in the `tests/` directory.
-
----
 
 ## 📜 License
 
@@ -135,7 +96,3 @@ Licensed under the [Apache 2.0 License](LICENSE).
 - [@yagizdas](https://github.com/yagizdas) (Author)
 - Built with [Next.js](https://nextjs.org), [HuggingFace](https://huggingface.co), and the pioneering open-source LLM community.
 
----
-
-> “Great things are not done by impulse, but by a series of small things brought together.”  
-> — Vincent Van Gogh
